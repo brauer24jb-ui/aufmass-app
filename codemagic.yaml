@@ -8,23 +8,14 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing (Explicit Setup)
+      - name: iOS Code Signing
         script: |
-          # 1. Den Schlüssel wieder 100% sicher als Datei speichern (das hat vorher fehlerfrei geklappt!)
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
           
-          # 2. Schlüsselbund initialisieren
           keychain initialize
           
-          # 3. BEIDE Zertifikate (Development & App Store) manuell anfordern und erstellen
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_DEVELOPMENT \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
-            --create
-            
+          # Holt das App Store Profil (erstellt es, falls es fehlt)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -32,15 +23,17 @@ workflows:
             --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --create
             
-          # 4. Zertifikate im System installieren und in Xcode fest verdrahten
           keychain add-certificates
+          
+          # Dieser Befehl trägt die Zertifikate in Xcode ein UND erstellt die wichtige export_options.plist im $HOME-Verzeichnis
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter pub get
-          # Wir zwingen Flutter, das frisch geladene App Store Profil beim Exportieren zu nutzen
-          flutter build ipa --release --export-method=app-store
+          
+          # HIER IST DER MAGISCHE PARAMETER: Wir zwingen Flutter, die frisch erstellte Profil-Datei von Codemagic zu nutzen!
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
