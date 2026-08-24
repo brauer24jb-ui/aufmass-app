@@ -20,7 +20,8 @@ workflows:
           EOF
       - name: Flutter build iOS
         script: |
-          cd flutter_application_1
+          # Da das Projekt direkt im Hauptordner liegt, brauchen wir kein "cd flutter_application_1"
+          flutter pub get
           flutter build ipa --release
       - name: Upload to TestFlight
         script: |
@@ -28,6 +29,6 @@ workflows:
             --issuer-id "0c97516d-8c75-47bf-b14e-6a55ca16ec07" \
             --key-id "A94DCGUAQR" \
             --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8 \
-            --ipa "flutter_application_1/build/ios/ipa/*.ipa"
+            --ipa "build/ios/ipa/*.ipa"
     artifacts:
-      - flutter_application_1/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
