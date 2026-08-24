@@ -8,46 +8,33 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing (The Ultimate Fix)
+      - name: iOS Code Signing (Clean Standard)
         script: |
-          # 1. Zertifikate holen und in den Schlüsselbund packen
+          # 1. Schlüsselbund vorbereiten
           keychain initialize
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --create
+          
+          # 2. BEIDE Zertifikate holen (Codemagic nutzt deine Umgebungsvariablen hier automatisch!)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_DEVELOPMENT --create
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE --create
+          
+          # 3. Zertifikate installieren
           keychain add-certificates
           
-          # 2. ERST BEREINIGEN: Ruby-Skript löscht alle störenden Automatismen und alten Profile restlos
-          gem install xcodeproj
-          cat <<EOF > fix_xcode.rb
-          require 'xcodeproj'
-          project_path = 'ios/Runner.xcodeproj'
-          project = Xcodeproj::Project.open(project_path)
-          project.targets.each do |target|
-            target.build_configurations.each do |config|
-              config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-              config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
-              config.build_settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = 'Apple Distribution'
-              config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
-              config.build_settings.delete('PROVISIONING_PROFILE')
-              config.build_settings.delete('DEVELOPMENT_TEAM')
-            end
-          end
-          project.save
-          EOF
-          ruby fix_xcode.rb
-          
-          # 3. DANN EINTRAGEN: Codemagic füllt das nun saubere Projekt mit dem App Store Zertifikat
+          # 4. Xcode automatisch konfigurieren UND die Export-Datei generieren lassen
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
+          # Einmal komplett aufräumen, um Altlasten der vorherigen Fehlversuche zu löschen
           flutter clean
           flutter pub get
+          
+          # Der Build-Befehl nutzt jetzt die von Codemagic perfekt generierte Konfigurationsdatei
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
+          # Auch hier reicht dieser kurze Befehl, die Credentials werden automatisch erkannt
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
