@@ -13,7 +13,7 @@ workflows:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
           
-          # Der Zusatz --create zwingt Codemagic, die App und Profile bei Apple zu ERSTELLEN, falls sie fehlen!
+          # Lädt die Zertifikate von Apple herunter (und erstellt sie, falls sie fehlen)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -21,7 +21,11 @@ workflows:
             --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --create
           
-          # Trägt die frisch erstellten Zertifikate in Xcode ein
+          # NEU: Initialisiert den Schlüsselbund und installiert die Zertifikate für Xcode!
+          keychain initialize
+          keychain add-certificates
+          
+          # Trägt die Profile in Xcode ein
           xcode-project use-profiles
       - name: Flutter build iOS
         script: |
