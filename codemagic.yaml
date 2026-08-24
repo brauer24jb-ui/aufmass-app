@@ -1,0 +1,14 @@
+workflows:
+  default-workflow:
+    name: Default Workflow
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+    scripts:
+      - name: Flutter build iOS
+        script: |
+          cd flutter_application_1
+          flutter build ios --release --no-codesign
+    artifacts:
+      - flutter_application_1/build/ios/iphoneos/*.app
