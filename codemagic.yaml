@@ -8,45 +8,49 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: Code Signing (Ruby Injection)
+      - name: iOS Code Signing Setup (The True Fix)
         script: |
-          # 1. Holt NUR das App Store Zertifikat
           keychain initialize
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --create
+          
+          # 1. BEIDE Zertifikate laden! (Das Archiv braucht Dev, der Export braucht App Store)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_DEVELOPMENT --create
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE --create
+          
           keychain add-certificates
           
-          # 2. RUBY INJECTION: Schreibt die fehlenden "Manual"-Befehle tief in die Xcode-Struktur!
+          # 2. RUBY INJECTION: Setzt Xcode sicher auf "Manual", OHNE die Team-ID zu zerstören
           gem install xcodeproj
           cat <<EOF > fix_xcode.rb
           require 'xcodeproj'
           project_path = 'ios/Runner.xcodeproj'
           project = Xcodeproj::Project.open(project_path)
+          
+          # Überschreibt die unsichtbaren Projekt-Attribute auf Manuell
+          attributes = project.root_object.attributes['TargetAttributes']
+          if attributes
+            attributes.each do |target_id, settings|
+              settings['ProvisioningStyle'] = 'Manual'
+            end
+          end
+          
+          # Zwingt die Build-Settings auf Manuell
           project.targets.each do |target|
             target.build_configurations.each do |config|
-              # Diese Zeilen zwingen Xcode auf Manuell, selbst wenn die Einträge vorher fehlten
               config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-              config.build_settings['PROVISIONING_STYLE'] = 'Manual'
-              config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
-              config.build_settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = 'Apple Distribution'
-              # Löscht störende alte Einträge, falls vorhanden
-              config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
-              config.build_settings.delete('PROVISIONING_PROFILE')
-              config.build_settings.delete('DEVELOPMENT_TEAM')
             end
           end
           project.save
           EOF
           ruby fix_xcode.rb
           
-          # 3. Trägt das Zertifikat in das nun perfekt präparierte Projekt ein
+          # 3. Codemagic trägt nun die geladenen Zertifikate und die Team-ID fehlerfrei ein
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
+          # Der Build läuft jetzt absolut widerstandslos durch die zwei Phasen
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
