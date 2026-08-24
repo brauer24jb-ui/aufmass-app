@@ -4,27 +4,14 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
+      groups:
+        - appstore_credentials
       flutter: stable
     scripts:
       - name: Set up code signing
         script: |
           mkdir -p ~/.appstoreconnect/private_keys
-          
-          cat << 'EOF' > ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
-          -----BEGIN PRIVATE KEY-----
-          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEBHBHkwdwIBAQQgMQXgS3/BWJ09G3Di
-          tA7j8RLZikgXQfkunZfGJRbAH4igCgYIKoZIzj0DAQehRANCAARFQdkBqqiVrhEq
-          jX2MJV97djKILQJ76m3pAHvup3u0PQ7w+muk3sKrtk8FKkWFdx7n8F8mtavnV5u
-          DzigFDmU
-          -----END PRIVATE KEY-----
-          EOF
-
-          # Lädt die Signing-Files automatisch von Apple herunter, damit Xcode sie findet
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --issuer-id "HIER_DEINE_ISSUER_ID_EINTRAGEN" \
-            --key-id "A94DCGUAQR" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
       - name: Flutter build iOS
         script: |
           flutter pub get
@@ -32,9 +19,9 @@ workflows:
       - name: Upload to TestFlight
         script: |
           app-store-connect publish \
-            --issuer-id "0c97516d-8c75-47bf-b14e-6a55ca16ec07" \
-            --key-id "A94DCGUAQR" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8 \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
