@@ -8,9 +8,9 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: Set up code signing settings
-        script: |
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type DISTRIBUTION
+     - name: Set up code signing settings
+       script: |
+         app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE
       - name: Flutter build iOS
         script: |
           cd flutter_application_1
