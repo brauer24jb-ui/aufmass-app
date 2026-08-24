@@ -7,6 +7,10 @@ workflows:
       groups:
         - appstore_credentials
       flutter: stable
+      vars:
+        # HIER IST DIE MAGIE: Diese Variablen zwingen Xcode im Hintergrund zum Distribution-Zertifikat!
+        FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
+        FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Distribution"
     scripts:
       - name: iOS Code Signing Setup
         script: |
@@ -32,8 +36,8 @@ workflows:
         script: |
           flutter pub get
           
-          # HIER IST DER HAMMER: Wir überschreiben Xcodes Willen direkt über die Kommandozeile!
-          flutter build ipa --release --export-options-plist=$HOME/export_options.plist -- CODE_SIGN_IDENTITY="Apple Distribution" CODE_SIGN_STYLE="Manual"
+          # Ein ganz sauberer, normaler Flutter-Befehl ohne fehlerhafte Anhänge!
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
