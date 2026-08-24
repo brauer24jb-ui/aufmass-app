@@ -8,14 +8,22 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing
+      - name: iOS Code Signing Setup
         script: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
           
           keychain initialize
           
-          # Holt das App Store Profil (erstellt es, falls es fehlt)
+          # 1. Holt das Development-Profil (für das Xcode-Archiv)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_DEVELOPMENT \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
+            --create
+            
+          # 2. Holt das App Store-Profil (für den TestFlight-Upload)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -25,14 +33,14 @@ workflows:
             
           keychain add-certificates
           
-          # Dieser Befehl trägt die Zertifikate in Xcode ein UND erstellt die wichtige export_options.plist im $HOME-Verzeichnis
+          # 3. Trägt beide in Xcode ein UND erstellt die $HOME/export_options.plist
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter pub get
           
-          # HIER IST DER MAGISCHE PARAMETER: Wir zwingen Flutter, die frisch erstellte Profil-Datei von Codemagic zu nutzen!
+          # 4. Baut die App und nutzt die von Codemagic erstellte Plist-Datei
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
