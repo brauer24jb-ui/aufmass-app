@@ -6,21 +6,21 @@ workflows:
     environment:
       groups:
         - appstore_credentials
+      vars:
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
       flutter: stable
     scripts:
       - name: Set up code signing settings
         script: |
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE
       - name: Flutter build iOS
         script: |
           cd flutter_application_1
           flutter build ipa --release
       - name: Upload to App Store Connect / TestFlight
         script: |
-          app-store-connect publish --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" --ipa "flutter_application_1/build/ios/ipa/*.ipa"
+          app-store-connect publish --ipa "flutter_application_1/build/ios/ipa/*.ipa"
     artifacts:
       - flutter_application_1/build/ios/ipa/*.ipa
