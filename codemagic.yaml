@@ -15,7 +15,6 @@ workflows:
           
           keychain initialize
           
-          # Holt ausschließlich das finale App Store Profil
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -24,26 +23,34 @@ workflows:
             --create
             
           keychain add-certificates
-          
-          # Trägt die Profile ein und erstellt die Plist-Datei
           xcode-project use-profiles
           
-      - name: Aggressively Force Xcode Build Settings
+      - name: Bulletproof Xcode Config (Ruby)
         script: |
-          # 1. Schaltet das störrische automatische Signieren hart auf manuell um
-          sed -i '' -e 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
+          # Installiert ein Tool, um Xcode-Dateien perfekt zu bearbeiten
+          gem install xcodeproj
           
-          # 2. Überschreibt JEDE erdenkliche Entwickler-Identität direkt im Code mit der App Store Identität
-          sed -i '' -e 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' -e 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Developer";/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' -e 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Development";/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
+          # Schreibt und führt ein Ruby-Skript aus, das Xcode gnadenlos auf Manuell und App Store zwingt
+          cat <<EOF > fix_xcode.rb
+          require 'xcodeproj'
+          project_path = 'ios/Runner.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          project.targets.each do |target|
+            target.build_configurations.each do |config|
+              config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+              config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
+              config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
+              config.build_settings.delete('PROVISIONING_PROFILE')
+            end
+          end
+          project.save
+          EOF
+          ruby fix_xcode.rb
           
       - name: Flutter build iOS
         script: |
           flutter pub get
-          
-          # Ein ganz normaler Build - Xcode hat nun keine andere Wahl mehr!
+          # Der Build läuft jetzt auf einem 100% sauber konfigurierten Projekt!
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
