@@ -4,23 +4,19 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      groups:
-        - appstore_credentials
       flutter: stable
     scripts:
       - name: Set up code signing settings
         script: |
-          # Fallback: Falls Codemagic die Variable nicht zieht, tragen wir sie hier direkt ein oder nutzen die Gruppe
-          echo "Key ID ist: $APP_STORE_CONNECT_KEY_IDENTIFIER"
-          
+          # Direktes Entschlüsseln und Schreiben des Private Keys
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
+          echo "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR1RBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFQkhCa3dkd0lCQVFxTUFYZ1MzL0JXTjA5R0RpCnRBN2o4UkxaaXpYUWZrdW5aZkdKUnJBSDRpZ0N5SUtvWklqMERBcWhSQU5DQUFSRlFka0JxcUlWckhxCmpYM0pWOTdkamtJTFFqNzNtUEh2dXAzdTBQUTd3K211azNLcnRrOEZLa1dGZHg3bjhGOG1hdm5WNXUtRHppZ0ZEbVUK-----END PRIVATE KEY-----" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
           
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
+            --issuer-id "DEINE_ISSUER_ID_HIER_EINTRAGEN" \
+            --key-id "A94DCGUAQR" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
       - name: Flutter build iOS
         script: |
           cd flutter_application_1
@@ -28,9 +24,9 @@ workflows:
       - name: Upload to App Store Connect / TestFlight
         script: |
           app-store-connect publish \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
+            --issuer-id "0c97516d-8c75-47bf-b14e-6a55ca16ec07" \
+            --key-id "A94DCGUAQR" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8 \
             --ipa "flutter_application_1/build/ios/ipa/*.ipa"
     artifacts:
       - flutter_application_1/build/ios/ipa/*.ipa
