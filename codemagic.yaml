@@ -8,31 +8,46 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup
+      - name: iOS Code Signing (Explicit Setup)
         script: |
-          # 1. Schlüsselbund auf dem Server initialisieren
+          # 1. Den Schlüssel wieder 100% sicher als Datei speichern (das hat vorher fehlerfrei geklappt!)
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
+          
+          # 2. Schlüsselbund initialisieren
           keychain initialize
           
-          # 2. Zertifikat holen/erstellen (Codemagic liest deine Secrets hier automatisch!)
+          # 3. BEIDE Zertifikate (Development & App Store) manuell anfordern und erstellen
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
+            --type IOS_APP_DEVELOPMENT \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --create
             
-          # 3. Zertifikate in den Schlüsselbund packen
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_STORE \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
+            --create
+            
+          # 4. Zertifikate im System installieren und in Xcode fest verdrahten
           keychain add-certificates
-          
-          # 4. Xcode zwingen, diese Zertifikate zu nutzen
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter pub get
-          # Flutter baut jetzt die App, Xcode findet das Zertifikat dank Schritt 4 sofort
-          flutter build ipa --release
+          # Wir zwingen Flutter, das frisch geladene App Store Profil beim Exportieren zu nutzen
+          flutter build ipa --release --export-method=app-store
           
       - name: Upload to TestFlight
         script: |
-          # Automatischer Upload (nutzt ebenfalls automatisch deine Secrets)
-          app-store-connect publish --ipa "build/ios/ipa/*.ipa"
+          app-store-connect publish \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
+            --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
