@@ -8,10 +8,18 @@ workflows:
     scripts:
       - name: Set up code signing settings
         script: |
-          # Direktes Entschlüsseln und Schreiben des Private Keys
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR1RBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFQkhCa3dkd0lCQVFxTUFYZ1MzL0JXTjA5R0RpCnRBN2o4UkxaaXpYUWZrdW5aZkdKUnJBSDRpZ0N5SUtvWklqMERBcWhSQU5DQUFSRlFka0JxcUlWckhxCmpYM0pWOTdkamtJTFFqNzNtUEh2dXAzdTBQUTd3K211azNLcnRrOEZLa1dGZHg3bjhGOG1hdm5WNXUtRHppZ0ZEbVUK-----END PRIVATE KEY-----" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
           
+          # Schreibt den Schlüssel direkt mit allen Zeilenumbrüchen in die .p8 Datei
+          cat << 'EOF' > ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
+          -----BEGIN PRIVATE KEY-----
+          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEBHBHkwdwIBAQQgMQXgS3/BWJ09G3Di
+          tA7j8RLZikgXQfkunZfGJRbAH4igCgYIKoZIzj0DAQehRANCAARFQdkBqqiVrhEq
+          jX2MJV97djKILQJ76m3pAHvup3u0PQ7w+muk3sKrtk8FKkWFdx7n8F8mtavnV5u
+          DzigFDmU
+          -----END PRIVATE KEY-----
+          EOF
+
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "DEINE_ISSUER_ID_HIER_EINTRAGEN" \
