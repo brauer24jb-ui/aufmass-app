@@ -6,7 +6,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Set up code signing settings
+      - name: Prepare key directory
         script: |
           mkdir -p ~/.appstoreconnect/private_keys
           
@@ -18,26 +18,16 @@ workflows:
           DzigFDmU
           -----END PRIVATE KEY-----
           EOF
-
-          # Schlüssel direkt korrekt einlesen statt den reinen Pfad zu übergeben
-          KEY_CONTENT="$(cat ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8)"
-
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --issuer-id "DEINE_ISSUER_ID_HIER_EINTRAGEN" \
-            --key-id "A94DCGUAQR" \
-            --private-key "$KEY_CONTENT"
       - name: Flutter build iOS
         script: |
           cd flutter_application_1
           flutter build ipa --release
-      - name: Upload to App Store Connect / TestFlight
+      - name: Upload to TestFlight
         script: |
-          KEY_CONTENT="$(cat ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8)"
           app-store-connect publish \
             --issuer-id "0c97516d-8c75-47bf-b14e-6a55ca16ec07" \
             --key-id "A94DCGUAQR" \
-            --private-key "$KEY_CONTENT" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8 \
             --ipa "flutter_application_1/build/ios/ipa/*.ipa"
     artifacts:
       - flutter_application_1/build/ios/ipa/*.ipa
