@@ -15,7 +15,7 @@ workflows:
           
           keychain initialize
           
-          # Wir holen NUR das App Store Profil (das Limit-Problem für Dev-Zertifikate wird umgangen)
+          # Holt ausschließlich das App Store Profil (umgeht das Apple-Limit für Dev-Zertifikate)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -24,20 +24,17 @@ workflows:
             --create
             
           keychain add-certificates
-          
-          # Trägt das Profil in Xcode ein und erstellt die export_options.plist
           xcode-project use-profiles
           
-      - name: Fix Xcode Code Sign Identity (The Magic Trick)
+      - name: Force Xcode to use Distribution Identity
         script: |
-          # Zwingt Xcode, direkt das App Store-Zertifikat zu nutzen, statt nach Development zu suchen
+          # HIER IST DER FIX: Wir zielen jetzt exakt auf Flutters Standard-Begriffe ab!
+          sed -i '' 's/iPhone Developer/Apple Distribution/g' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/Apple Development/Apple Distribution/g' ios/Runner.xcodeproj/project.pbxproj
           
       - name: Flutter build iOS
         script: |
           flutter pub get
-          
-          # Baut die App fehlerfrei mit dem Distribution-Zertifikat
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
