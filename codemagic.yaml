@@ -10,15 +10,27 @@ workflows:
     scripts:
       - name: Set up code signing settings
         script: |
+          # Fallback: Falls Codemagic die Variable nicht zieht, tragen wir sie hier direkt ein oder nutzen die Gruppe
+          echo "Key ID ist: $APP_STORE_CONNECT_KEY_IDENTIFIER"
+          
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
+          
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_STORE \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
       - name: Flutter build iOS
         script: |
           cd flutter_application_1
           flutter build ipa --release
       - name: Upload to App Store Connect / TestFlight
         script: |
-          app-store-connect publish --ipa "flutter_application_1/build/ios/ipa/*.ipa"
+          app-store-connect publish \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
+            --ipa "flutter_application_1/build/ios/ipa/*.ipa"
     artifacts:
       - flutter_application_1/build/ios/ipa/*.ipa
