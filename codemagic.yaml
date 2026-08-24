@@ -15,7 +15,7 @@ workflows:
       - name: Flutter build iOS
         script: |
           flutter pub get
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          flutter build ipa --release
       - name: Upload to TestFlight
         script: |
           app-store-connect publish \
