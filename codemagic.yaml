@@ -15,15 +15,7 @@ workflows:
           
           keychain initialize
           
-          # 1. Holt das Development-Profil (für das Xcode-Archiv)
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_DEVELOPMENT \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
-            --create
-            
-          # 2. Holt das App Store-Profil (für den TestFlight-Upload)
+          # Wir holen NUR das App Store Profil (das Limit-Problem für Dev-Zertifikate wird umgangen)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -33,14 +25,19 @@ workflows:
             
           keychain add-certificates
           
-          # 3. Trägt beide in Xcode ein UND erstellt die $HOME/export_options.plist
+          # Trägt das Profil in Xcode ein und erstellt die export_options.plist
           xcode-project use-profiles
+          
+      - name: Fix Xcode Code Sign Identity (The Magic Trick)
+        script: |
+          # Zwingt Xcode, direkt das App Store-Zertifikat zu nutzen, statt nach Development zu suchen
+          sed -i '' 's/Apple Development/Apple Distribution/g' ios/Runner.xcodeproj/project.pbxproj
           
       - name: Flutter build iOS
         script: |
           flutter pub get
           
-          # 4. Baut die App und nutzt die von Codemagic erstellte Plist-Datei
+          # Baut die App fehlerfrei mit dem Distribution-Zertifikat
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
