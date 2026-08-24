@@ -7,10 +7,6 @@ workflows:
       groups:
         - appstore_credentials
       flutter: stable
-      vars:
-        # HIER IST DIE MAGIE: Diese Variablen zwingen Xcode im Hintergrund zum Distribution-Zertifikat!
-        FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-        FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Distribution"
     scripts:
       - name: iOS Code Signing Setup
         script: |
@@ -19,7 +15,7 @@ workflows:
           
           keychain initialize
           
-          # Holt ausschließlich das App Store Profil
+          # Holt ausschließlich das finale App Store Profil
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -32,11 +28,22 @@ workflows:
           # Trägt die Profile ein und erstellt die Plist-Datei
           xcode-project use-profiles
           
+      - name: Aggressively Force Xcode Build Settings
+        script: |
+          # 1. Schaltet das störrische automatische Signieren hart auf manuell um
+          sed -i '' -e 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
+          
+          # 2. Überschreibt JEDE erdenkliche Entwickler-Identität direkt im Code mit der App Store Identität
+          sed -i '' -e 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' -e 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Developer";/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' -e 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Development";/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "Apple Distribution";/g' ios/Runner.xcodeproj/project.pbxproj
+          
       - name: Flutter build iOS
         script: |
           flutter pub get
           
-          # Ein ganz sauberer, normaler Flutter-Befehl ohne fehlerhafte Anhänge!
+          # Ein ganz normaler Build - Xcode hat nun keine andere Wahl mehr!
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
