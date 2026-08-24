@@ -6,7 +6,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Prepare key directory
+      - name: Set up code signing
         script: |
           mkdir -p ~/.appstoreconnect/private_keys
           
@@ -18,9 +18,15 @@ workflows:
           DzigFDmU
           -----END PRIVATE KEY-----
           EOF
+
+          # Lädt die Signing-Files automatisch von Apple herunter, damit Xcode sie findet
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_STORE \
+            --issuer-id "HIER_DEINE_ISSUER_ID_EINTRAGEN" \
+            --key-id "A94DCGUAQR" \
+            --private-key ~/.appstoreconnect/private_keys/AuthKey_A94DCGUAQR.p8
       - name: Flutter build iOS
         script: |
-          # Da das Projekt direkt im Hauptordner liegt, brauchen wir kein "cd flutter_application_1"
           flutter pub get
           flutter build ipa --release
       - name: Upload to TestFlight
