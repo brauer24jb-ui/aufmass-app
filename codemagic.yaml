@@ -8,29 +8,17 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup
+      - name: iOS Code Signing (The Ultimate Fix)
         script: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
-          
+          # 1. Zertifikate holen und in den Schlüsselbund packen
           keychain initialize
-          
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --create
-            
           keychain add-certificates
-          xcode-project use-profiles
           
-      - name: Bulletproof Xcode Config (Ruby)
-        script: |
-          # Installiert ein Tool, um Xcode-Dateien perfekt zu bearbeiten
+          # 2. ERST BEREINIGEN: Ruby-Skript löscht alle störenden Automatismen und alten Profile restlos
           gem install xcodeproj
-          
-          # Schreibt und führt ein Ruby-Skript aus, das Xcode gnadenlos auf Manuell und App Store zwingt
           cat <<EOF > fix_xcode.rb
           require 'xcodeproj'
           project_path = 'ios/Runner.xcodeproj'
@@ -39,26 +27,27 @@ workflows:
             target.build_configurations.each do |config|
               config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
               config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
+              config.build_settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = 'Apple Distribution'
               config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
               config.build_settings.delete('PROVISIONING_PROFILE')
+              config.build_settings.delete('DEVELOPMENT_TEAM')
             end
           end
           project.save
           EOF
           ruby fix_xcode.rb
           
+          # 3. DANN EINTRAGEN: Codemagic füllt das nun saubere Projekt mit dem App Store Zertifikat
+          xcode-project use-profiles
+          
       - name: Flutter build iOS
         script: |
+          flutter clean
           flutter pub get
-          # Der Build läuft jetzt auf einem 100% sauber konfigurierten Projekt!
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
-          app-store-connect publish \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
-            --ipa "build/ios/ipa/*.ipa"
+          app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
