@@ -8,40 +8,31 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: Prepare and build pure Flutter code
+      - name: iOS Code Signing Setup
         script: |
-          flutter pub get
-          # 1. Entzieht Flutter die Kontrolle über das Zertifikat komplett!
-          flutter build ios --release --no-codesign
-      - name: Setup exact Code Signing
-        script: |
-          # 2. Schlüssel speichern
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8
-          
-          # 3. Zertifikate holen und Xcode damit zwingen
+          # 1. Schlüsselbund auf dem Server initialisieren
           keychain initialize
+          
+          # 2. Zertifikat holen/erstellen (Codemagic liest deine Secrets hier automatisch!)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
             --create
+            
+          # 3. Zertifikate in den Schlüsselbund packen
           keychain add-certificates
+          
+          # 4. Xcode zwingen, diese Zertifikate zu nutzen
           xcode-project use-profiles
-      - name: Package native IPA
+          
+      - name: Flutter build iOS
         script: |
-          # 4. Codemagic packt das IPA fehlerfrei mit dem Apple-Profil
-          xcode-project build-ipa \
-            --workspace "ios/Runner.xcworkspace" \
-            --scheme "Runner" \
-            --config "Release"
+          flutter pub get
+          # Flutter baut jetzt die App, Xcode findet das Zertifikat dank Schritt 4 sofort
+          flutter build ipa --release
+          
       - name: Upload to TestFlight
         script: |
-          app-store-connect publish \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_IDENTIFIER.p8 \
-            --ipa "build/ios/ipa/*.ipa"
+          # Automatischer Upload (nutzt ebenfalls automatisch deine Secrets)
+          app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
