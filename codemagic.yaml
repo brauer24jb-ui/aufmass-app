@@ -8,31 +8,46 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup
+      - name: iOS Code Signing Setup (The Sniper Fix)
         script: |
           keychain initialize
           
-          # 1. Erstellt ein brandneues Development-Zertifikat (damit Flutters Phase 1 durchläuft)
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_DEVELOPMENT \
-            --create
-          
-          # 2. Erstellt ein brandneues App Store-Zertifikat (für Flutters Phase 2 und TestFlight)
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --create
-            
+          # 1. Holt die beiden frischen Zertifikate von deinem sauberen Account
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_DEVELOPMENT --create
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE --create
           keychain add-certificates
           
-          # Trägt beide frischen Zertifikate fehlerfrei in dein repariertes Xcode-Projekt ein
+          # 2. SNIPER HACK: Injiziert die Team-ID punktgenau in den Runner, rettet die Plugins!
+          gem install xcodeproj
+          cat <<EOF > fix_team.rb
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
+          
+          if project.root_object.attributes['TargetAttributes']
+            project.root_object.attributes['TargetAttributes'].each do |t_id, settings|
+              settings['DevelopmentTeam'] = 'RX8T7B337M'
+            end
+          end
+          
+          project.targets.each do |target|
+            if target.name == 'Runner'
+              target.build_configurations.each do |config|
+                config.build_settings['DEVELOPMENT_TEAM'] = 'RX8T7B337M'
+              end
+            end
+          end
+          project.save
+          EOF
+          ruby fix_team.rb
+          
+          # 3. Codemagic verbindet nun die Zertifikate fehlerfrei mit dem Projekt
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          
-          # Der Build findet jetzt beide Zertifikate und läuft sauber durch beide Phasen
+          # 4. Der Build hat jetzt alle Puzzleteile und baut das finale Archiv
           flutter build ipa --release --export-method=app-store
           
       - name: Upload to TestFlight
