@@ -8,65 +8,31 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing (Native Bypass)
+      - name: iOS Code Signing
         script: |
           keychain initialize
           
-          # 1. Holt AUSSCHLIESSLICH das App Store Zertifikat
+          # 1. Wir holen ausschließlich das App Store Profil für den Release
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # 2. RUBY INJECTION: Macht Xcode gewaltsam gefügig
-          gem install xcodeproj
-          cat <<EOF > fix_xcode.rb
-          require 'xcodeproj'
-          project_path = 'ios/Runner.xcodeproj'
-          project = Xcodeproj::Project.open(project_path)
-          
-          attributes = project.root_object.attributes['TargetAttributes']
-          if attributes
-            attributes.each do |target_id, settings|
-              settings['ProvisioningStyle'] = 'Manual'
-            end
-          end
-          
-          project.targets.each do |target|
-            target.build_configurations.each do |config|
-              config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-              config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
-              config.build_settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = 'Apple Distribution'
-              config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
-              config.build_settings.delete('PROVISIONING_PROFILE')
-              config.build_settings.delete('DEVELOPMENT_TEAM')
-            end
-          end
-          project.save
-          EOF
-          ruby fix_xcode.rb
-          
-          # 3. Codemagic trägt Zertifikat und Team-ID jetzt in ein 100% sauberes Projekt ein
+          # 2. Codemagic liest das Profil und verknüpft es automatisch mit deinem Projekt
           xcode-project use-profiles
           
-      - name: Compile Flutter (NO SIGNING)
+      - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          # HIER IST DER SCHLÜSSEL: Flutter kompiliert nur, darf aber NICHT signieren!
-          flutter build ios --release --no-codesign
           
-      - name: Archive and Sign (Codemagic Native)
-        script: |
-          # Codemagic schnappt sich den unverschlüsselten Code und signiert ihn fehlerfrei selbst
-          xcode-project build-ipa \
-            --workspace "ios/Runner.xcworkspace" \
-            --scheme "Runner" \
-            --config "Release"
-            
+          # 3. Der offizielle Flutter-Befehl übernimmt das Bauen und Signieren fehlerfrei
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          
       - name: Upload to TestFlight
         script: |
+          # 4. Automatischer Upload in den Store
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
