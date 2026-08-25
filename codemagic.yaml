@@ -8,51 +8,43 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup
+      - name: 1. Fetch App Store Certificate
         script: |
           keychain initialize
           
-          # 1. Holt zwingend BEIDE Zertifikate, damit es keine Lücken für Xcode gibt
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_DEVELOPMENT \
-            --create
-            
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --create
-            
+          # Wir holen NUR noch das App Store Zertifikat. Die Development-Falle ignorieren wir.
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE --create
           keychain add-certificates
           
-          # 2. Codemagic ordnet die Zertifikate jetzt fehlerfrei zu (kein blindes Raten mehr!)
-          xcode-project use-profiles
-          
-      - name: Create Export Options Plist manually
-        script: |
-          # 3. Wir erstellen die von Flutter verlangte Datei einfach selbst
-          cat <<EOF > $HOME/export_options.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>manageAppVersionAndBuildNumber</key>
-              <true/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-          
-      - name: Flutter build iOS
+      - name: 2. Build Flutter Assets (Ohne Signatur-Zwang)
         script: |
           flutter clean
           flutter pub get
           
-          # 4. Baut die App sicher mit der manuellen Export-Datei
-          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          # Baut die Rohdaten der App und ignoriert Zertifikate komplett!
+          flutter build ios --release --no-codesign
           
-      - name: Upload to TestFlight
+      - name: 3. Force Xcode Settings & Inject Profile
+        script: |
+          # 1. Zwingt das Projekt radikal auf "Manual"
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
+          
+          # 2. DER MAGISCHE FIX: Wir überschreiben jedes "iPhone Developer" mit "Apple Distribution"
+          sed -i '' 's/iPhone Developer/Apple Distribution/g' ios/Runner.xcodeproj/project.pbxproj
+          
+          # 3. Trägt das heruntergeladene Profil fehlerfrei ein
+          xcode-project use-profiles
+          
+      - name: 4. Archive and Export IPA (Codemagic Native)
+        script: |
+          # Codemagic schnürt das Paket jetzt absolut widerstandslos
+          xcode-project build-ipa \
+            --workspace "ios/Runner.xcworkspace" \
+            --scheme "Runner" \
+            --config "Release"
+            
+      - name: 5. Upload to TestFlight
         script: |
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
