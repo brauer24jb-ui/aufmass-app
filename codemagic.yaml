@@ -4,7 +4,6 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     
-    # Hier verknüpfen wir dein Apple-Konto!
     integrations:
       app_store_connect: Nordwest
       
@@ -19,33 +18,15 @@ workflows:
         script: |
           xcode-project use-profiles
           
-      - name: Generate export_options.plist manually
-        script: |
-          cat <<EOF > $HOME/export_options.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>manageAppVersionAndBuildNumber</key>
-              <true/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-          
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          flutter build ipa --release --export-method app-store
 
     artifacts:
       - build/ios/ipa/*.ipa
       
-    # Hier passiert die Magie: Der automatische Upload!
     publishing:
       app_store_connect:
         auth: integration
