@@ -8,20 +8,20 @@ workflows:
         - appstore_credentials
       flutter: stable
       
-      # Codemagic holt weiterhin brav alles aus dem Tresor
+      # Codemagic holt die Dateien zuverlässig aus deinem UI-Tresor
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
         
     scripts:
-      - name: Restore Xcode Automatic Signing
+      - name: Inject Provisioning Profiles
         script: |
-          sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/ProvisioningStyle = Manual;/ProvisioningStyle = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
+          # HIER IST DER FEHLENDE BEFEHL!
+          # Er zwingt Xcode, dein Profil und Zertifikat aus dem Tresor zu nutzen.
+          xcode-project use-profiles
           
       - name: Generate export_options.plist manually
         script: |
-          # Wir erstellen die verlangte Datei einfach selbst - keine Fehlermeldung mehr möglich!
           cat <<EOF > $HOME/export_options.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -42,7 +42,7 @@ workflows:
           flutter clean
           flutter pub get
           
-          # Flutter greift jetzt zielsicher auf unsere selbst erstellte Datei zu
+          # Flutter hat jetzt sowohl das Profil als auch die korrekte Export-Datei
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
