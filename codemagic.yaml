@@ -12,29 +12,28 @@ workflows:
         script: |
           keychain initialize
           
-          # Codemagic hat jetzt wieder Platz bei Apple und generiert ein komplett frisches Zertifikat samt Private Key!
+          # 1. Wir erstellen ein frisches Development-Zertifikat (damit Flutters interner Check glücklich ist)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+          
+          # 2. Wir erstellen das frische App Store-Zertifikat (für den TestFlight-Upload)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
+          
+          # Codemagic ordnet die frischen Zertifikate jetzt deinem reparierten Projekt zu
           xcode-project use-profiles
           
-      - name: Compile Flutter (NO SIGNING)
+      - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          # Wir verbieten Flutter das Signieren, damit es keine unsinnigen Dev-Zertifikate mehr fordert
-          flutter build ios --release --no-codesign
+          # Der Standard-Befehl funktioniert jetzt, weil die Schlüssel im Apple-Konto endlich sauber sind!
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
-      - name: Archive and Sign (Codemagic Native)
-        script: |
-          # Codemagic schnürt das Paket und klebt das frische Zertifikat absolut fehlerfrei drauf
-          xcode-project build-ipa \
-            --workspace "ios/Runner.xcworkspace" \
-            --scheme "Runner" \
-            --config "Release"
-            
       - name: Upload to TestFlight
         script: |
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
