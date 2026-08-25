@@ -42,9 +42,9 @@ workflows:
           
       - name: Upload to TestFlight
         script: |
-          # Wir suchen im gesamten Build-Verzeichnis nach der .ipa-Datei und laden sie hoch
+          # Korrekter Befehl mit --file statt --ipa
           IPA_PATH=$(find . -name "*.ipa" | head -n 1)
-          echo "Found IPA at: $IPA_PATH"
-          app-store-connect publish --ipa "$IPA_PATH"
+          echo "Uploading IPA from: $IPA_PATH"
+          app-store-connect publish --file "$IPA_PATH"
     artifacts:
       - build/ios/ipa/*.ipa
