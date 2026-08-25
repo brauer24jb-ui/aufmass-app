@@ -1,5 +1,5 @@
 workflows:
-  ios-testflight-workflow:
+  default-workflow:
     name: Aufmass App TestFlight Build
     max_build_duration: 60
     instance_type: mac_mini_m2
@@ -8,7 +8,6 @@ workflows:
         - appstore_credentials
       flutter: stable
       vars:
-        # Als absolutes Sicherheitsnetz, damit Flutter nicht auf dumme Gedanken kommt
         FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
         FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Distribution"
     scripts:
@@ -16,27 +15,22 @@ workflows:
         script: |
           keychain initialize
           
-          # 1. Holt exakt das eine App Store Zertifikat, das wir brauchen
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # 2. Codemagic trägt das Zertifikat jetzt in dein sauber repariertes Projekt ein
           xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          
-          # 3. Der ganz normale Build-Befehl – Xcode wird ihn jetzt widerstandslos akzeptieren
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
-          # 4. Ab in den Store damit
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
