@@ -7,44 +7,28 @@ workflows:
       groups:
         - appstore_credentials
       flutter: stable
+      
+      # DIE MAGIE: Dieser Block sagt Codemagic, dass es deinen neuen UI-Tresor nutzen soll!
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.nordwest.aufmassapp
+        
     scripts:
-      - name: 1. Fetch App Store Certificate
+      - name: Restore Xcode Automatic Signing
         script: |
-          keychain initialize
+          # Löscht unsere alten manuellen "Hacks" aus der Datei, da wir sie nicht mehr brauchen
+          sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/ProvisioningStyle = Manual;/ProvisioningStyle = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
           
-          # Wir holen NUR noch das App Store Zertifikat. Die Development-Falle ignorieren wir.
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" --type IOS_APP_STORE --create
-          keychain add-certificates
-          
-      - name: 2. Build Flutter Assets (Ohne Signatur-Zwang)
+      - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
           
-          # Baut die Rohdaten der App und ignoriert Zertifikate komplett!
-          flutter build ios --release --no-codesign
+          # Baut die App und nutzt die von Codemagic generierte Export-Datei
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
-      - name: 3. Force Xcode Settings & Inject Profile
-        script: |
-          # 1. Zwingt das Projekt radikal auf "Manual"
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
-          
-          # 2. DER MAGISCHE FIX: Wir überschreiben jedes "iPhone Developer" mit "Apple Distribution"
-          sed -i '' 's/iPhone Developer/Apple Distribution/g' ios/Runner.xcodeproj/project.pbxproj
-          
-          # 3. Trägt das heruntergeladene Profil fehlerfrei ein
-          xcode-project use-profiles
-          
-      - name: 4. Archive and Export IPA (Codemagic Native)
-        script: |
-          # Codemagic schnürt das Paket jetzt absolut widerstandslos
-          xcode-project build-ipa \
-            --workspace "ios/Runner.xcworkspace" \
-            --scheme "Runner" \
-            --config "Release"
-            
-      - name: 5. Upload to TestFlight
+      - name: Upload to TestFlight
         script: |
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
     artifacts:
