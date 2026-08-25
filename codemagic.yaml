@@ -15,6 +15,12 @@ workflows:
         script: |
           keychain initialize
           
+          # 1. Holt das Development-Zertifikat (beruhigt Flutters Zwischen-Check)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+          
+          # 2. Holt das App Store-Zertifikat (für den echten TestFlight-Release)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
