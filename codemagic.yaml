@@ -7,16 +7,31 @@ workflows:
       groups:
         - appstore_credentials
       flutter: stable
-      # Dieser Block lädt die jetzt existierenden Profile herunter und regelt ALLES automatisch
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.nordwest.aufmassapp
     scripts:
+      - name: iOS Code Signing Setup
+        script: |
+          keychain initialize
+          
+          # Erstellt die Zertifikate frisch auf deinem sauberen Apple-Account
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+            
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_STORE \
+            --create
+            
+          keychain add-certificates
+          
+          # Codemagic trägt die frischen Zertifikate in dein repariertes "Automatic" Projekt ein
+          xcode-project use-profiles
+          
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          # Flutter nutzt jetzt die von Codemagic generierte Export-Datei
+          
+          # Der Build nutzt die von Codemagic generierte Export-Datei
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
