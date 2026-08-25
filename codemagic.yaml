@@ -22,7 +22,8 @@ workflows:
         script: |
           flutter clean
           flutter pub get
-          flutter build ipa --release --export-method app-store
+          # Hier ist der magische Befehl: Wir nutzen die von Codemagic generierte Datei!
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
