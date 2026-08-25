@@ -7,37 +7,20 @@ workflows:
       groups:
         - appstore_credentials
       flutter: stable
+      
+      # Die Magie: Holt die (jetzt existierenden) Profile und generiert die export_options.plist!
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.nordwest.aufmassapp
+        
     scripts:
-      - name: iOS Code Signing Setup (The Config Injector)
-        script: |
-          keychain initialize
-          
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_STORE \
-            --create
-            
-          keychain add-certificates
-          
-          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
-          
-          PROFILE_UUID=$(grep -aA1 "<key>UUID</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          TEAM_ID=$(grep -aA1 "<key>TeamIdentifier</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          
-          echo "Gefundene Team-ID: $TEAM_ID"
-          echo "Gefundene UUID: $PROFILE_UUID"
-          
-          echo "DEVELOPMENT_TEAM=$TEAM_ID" >> ios/Flutter/Release.xcconfig
-          echo "PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID" >> ios/Flutter/Release.xcconfig
-          echo "CODE_SIGN_STYLE=Manual" >> ios/Flutter/Release.xcconfig
-          echo "CODE_SIGN_IDENTITY=Apple Distribution" >> ios/Flutter/Release.xcconfig
-          
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
           
-          # HIER IST DER FIX: Wir lassen Flutter die Export-Datei automatisch für den App Store generieren
-          flutter build ipa --release --export-method=app-store
+          # Flutter nutzt jetzt die von Codemagic generierte Datei und baut sauber durch
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
