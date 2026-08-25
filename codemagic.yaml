@@ -12,24 +12,20 @@ workflows:
         script: |
           keychain initialize
           
-          # 1. Nur das echte App Store Zertifikat holen
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # 2. Den Pfad zum frisch geladenen Profil finden
           PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
           
-          # 3. UUID und Team-ID als reinen Text auslesen (Ignoriert Apple-Warnmeldungen, die andere Skripte crashen)
           PROFILE_UUID=$(grep -aA1 "<key>UUID</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
           TEAM_ID=$(grep -aA1 "<key>TeamIdentifier</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
           
           echo "Gefundene Team-ID: $TEAM_ID"
           echo "Gefundene UUID: $PROFILE_UUID"
           
-          # 4. DIREKT in Flutters Konfiguration schreiben (Gilt nur für die App, rettet die Plugins!)
           echo "DEVELOPMENT_TEAM=$TEAM_ID" >> ios/Flutter/Release.xcconfig
           echo "PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID" >> ios/Flutter/Release.xcconfig
           echo "CODE_SIGN_STYLE=Manual" >> ios/Flutter/Release.xcconfig
@@ -40,8 +36,8 @@ workflows:
           flutter clean
           flutter pub get
           
-          # 5. Flutter hat jetzt die exakten Daten direkt im Quellcode und baut fehlerfrei
-          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          # HIER IST DER FIX: Wir lassen Flutter die Export-Datei automatisch für den App Store generieren
+          flutter build ipa --release --export-method=app-store
           
       - name: Upload to TestFlight
         script: |
