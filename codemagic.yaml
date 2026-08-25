@@ -12,14 +12,19 @@ workflows:
         script: |
           keychain initialize
           
-          # Holt exakt das eine benötigte Zertifikat von Apple
+          # 1. Erstellt ein brandneues Development-Zertifikat (damit Flutters Phase 1 durchläuft)
+          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+          
+          # 2. Erstellt ein brandneues App Store-Zertifikat (für Flutters Phase 2 und TestFlight)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # Trägt das Zertifikat NUR in deine Haupt-App ein, lässt die Plugins aber in Ruhe
+          # Trägt beide frischen Zertifikate fehlerfrei in dein repariertes Xcode-Projekt ein
           xcode-project use-profiles
           
       - name: Flutter build iOS
@@ -27,7 +32,7 @@ workflows:
           flutter clean
           flutter pub get
           
-          # Der offizielle, saubere Weg: Baut die IPA und generiert die nötigen Export-Optionen selbst
+          # Der Build findet jetzt beide Zertifikate und läuft sauber durch beide Phasen
           flutter build ipa --release --export-method=app-store
           
       - name: Upload to TestFlight
