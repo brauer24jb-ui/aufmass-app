@@ -12,9 +12,6 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
         
-    integrations:
-      app_store_connect: appstore_credentials
-        
     scripts:
       - name: Inject Provisioning Profiles
         script: |
@@ -42,8 +39,6 @@ workflows:
           flutter clean
           flutter pub get
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
-          
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+
+    artifacts:
+      - build/ios/ipa/*.ipa
