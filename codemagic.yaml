@@ -40,13 +40,9 @@ workflows:
           flutter pub get
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
-    publishing:
-      app_store_connect:
-        auth:
-          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        submit_to_testflight: true
-        # Codemagic sucht die IPA jetzt vollautomatisch über dieses Artefakt-Flag
+      - name: Upload to TestFlight
+        script: |
+          # Der direkte Befehl zum Hochladen der gebauten IPA
+          app-store-connect publish --ipa "$(find build/ios/ipa -name "*.ipa")"
     artifacts:
       - build/ios/ipa/*.ipa
