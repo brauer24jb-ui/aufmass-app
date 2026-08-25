@@ -8,37 +8,27 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup (The Override)
+      - name: iOS Code Signing Setup
         script: |
           keychain initialize
           
+          # Holt exakt das eine benötigte Zertifikat von Apple
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
-          
-          security cms -D -i "$PROFILE_PATH" > profile.plist
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" profile.plist)
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" profile.plist)
-          
-          echo "Gefundene Team-ID: $TEAM_ID"
-          echo "Gefundene Profil-UUID: $PROFILE_UUID"
-          
-          echo "FLUTTER_XCODE_DEVELOPMENT_TEAM=$TEAM_ID" >> $CM_ENV
-          echo "FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID" >> $CM_ENV
-          echo "FLUTTER_XCODE_CODE_SIGN_STYLE=Manual" >> $CM_ENV
-          echo "FLUTTER_XCODE_CODE_SIGN_IDENTITY=Apple Distribution" >> $CM_ENV
+          # Trägt das Zertifikat NUR in deine Haupt-App ein, lässt die Plugins aber in Ruhe
+          xcode-project use-profiles
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
           
-          # HIER IST DER FIX: Einfach ein sauberer Build ohne fehlende Dateien!
-          flutter build ipa --release
+          # Der offizielle, saubere Weg: Baut die IPA und generiert die nötigen Export-Optionen selbst
+          flutter build ipa --release --export-method=app-store
           
       - name: Upload to TestFlight
         script: |
