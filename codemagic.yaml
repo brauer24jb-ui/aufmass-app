@@ -8,7 +8,7 @@ workflows:
         - appstore_credentials
       flutter: stable
       
-      # DIE MAGIE: Dieser Block sagt Codemagic, dass es deinen neuen UI-Tresor nutzen soll!
+      # Codemagic holt weiterhin brav alles aus dem Tresor
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
@@ -16,16 +16,33 @@ workflows:
     scripts:
       - name: Restore Xcode Automatic Signing
         script: |
-          # Löscht unsere alten manuellen "Hacks" aus der Datei, da wir sie nicht mehr brauchen
           sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/ProvisioningStyle = Manual;/ProvisioningStyle = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
+          
+      - name: Generate export_options.plist manually
+        script: |
+          # Wir erstellen die verlangte Datei einfach selbst - keine Fehlermeldung mehr möglich!
+          cat <<EOF > $HOME/export_options.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>manageAppVersionAndBuildNumber</key>
+              <true/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
           
-          # Baut die App und nutzt die von Codemagic generierte Export-Datei
+          # Flutter greift jetzt zielsicher auf unsere selbst erstellte Datei zu
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
