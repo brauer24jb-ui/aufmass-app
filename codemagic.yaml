@@ -3,11 +3,13 @@ workflows:
     name: Aufmass App TestFlight Build
     max_build_duration: 60
     instance_type: mac_mini_m2
-    environment:
-      groups:
-        - appstore_credentials
-      flutter: stable
+    
+    # Hier verknüpfen wir dein Apple-Konto!
+    integrations:
+      app_store_connect: Nordwest
       
+    environment:
+      flutter: stable
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
@@ -42,3 +44,9 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
+      
+    # Hier passiert die Magie: Der automatische Upload!
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
