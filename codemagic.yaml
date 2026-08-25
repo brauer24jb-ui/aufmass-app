@@ -8,30 +8,40 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: iOS Code Signing Setup
+      - name: iOS Code Signing Setup (The Override)
         script: |
           keychain initialize
           
-          # 1. Wir erstellen ein frisches Development-Zertifikat (damit Flutters interner Check glücklich ist)
-          app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
-            --type IOS_APP_DEVELOPMENT \
-            --create
-          
-          # 2. Wir erstellen das frische App Store-Zertifikat (für den TestFlight-Upload)
+          # 1. Frisches App Store-Zertifikat von Apple holen (dein Konto ist ja jetzt schön leer!)
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # Codemagic ordnet die frischen Zertifikate jetzt deinem reparierten Projekt zu
-          xcode-project use-profiles
+          # 2. Den Pfad des gerade heruntergeladenen Profils finden
+          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
+          
+          # 3. Profil in eine lesbare XML umwandeln und Team-ID sowie UUID auslesen
+          security cms -D -i "$PROFILE_PATH" > profile.plist
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" profile.plist)
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" profile.plist)
+          
+          echo "Gefundene Team-ID: $TEAM_ID"
+          echo "Gefundene Profil-UUID: $PROFILE_UUID"
+          
+          # 4. BULLDOZER: Wir hämmern Flutter diese Werte fest ein. Xcode hat keine Wahl mehr.
+          echo "FLUTTER_XCODE_DEVELOPMENT_TEAM=$TEAM_ID" >> $CM_ENV
+          echo "FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID" >> $CM_ENV
+          echo "FLUTTER_XCODE_CODE_SIGN_STYLE=Manual" >> $CM_ENV
+          echo "FLUTTER_XCODE_CODE_SIGN_IDENTITY=Apple Distribution" >> $CM_ENV
           
       - name: Flutter build iOS
         script: |
           flutter clean
           flutter pub get
-          # Der Standard-Befehl funktioniert jetzt, weil die Schlüssel im Apple-Konto endlich sauber sind!
+          
+          # Flutter baut jetzt mit den erzwungenen Werten von oben.
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
