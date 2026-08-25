@@ -44,4 +44,3 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-        expire_build_precheck_warnings: false
