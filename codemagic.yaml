@@ -8,36 +8,41 @@ workflows:
         - appstore_credentials
       flutter: stable
     scripts:
-      - name: Build Flutter Assets (No Signing)
-        script: |
-          flutter clean
-          flutter pub get
-          # 1. Flutter bereitet alles vor, installiert Plugins und baut den Code. 
-          # WICHTIG: Er signiert noch NICHT, damit er nicht abstürzt!
-          flutter build ios --release --no-codesign
-          
-      - name: iOS Code Signing Setup
+      - name: iOS Code Signing Setup (The Config Injector)
         script: |
           keychain initialize
           
-          # 2. JETZT, wo Flutter fertig ist, holen wir das Zertifikat
+          # 1. Nur das echte App Store Zertifikat holen
           app-store-connect fetch-signing-files "com.nordwest.aufmassapp" \
             --type IOS_APP_STORE \
             --create
             
           keychain add-certificates
           
-          # 3. Codemagic trägt das Profil in das Projekt ein (Flutter kann es jetzt nicht mehr überschreiben!)
-          xcode-project use-profiles
+          # 2. Den Pfad zum frisch geladenen Profil finden
+          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
           
-      - name: Archive and Export IPA (Codemagic Native)
+          # 3. UUID und Team-ID als reinen Text auslesen (Ignoriert Apple-Warnmeldungen, die andere Skripte crashen)
+          PROFILE_UUID=$(grep -aA1 "<key>UUID</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          TEAM_ID=$(grep -aA1 "<key>TeamIdentifier</key>" "$PROFILE_PATH" | grep string | sed -e 's/<[^>]*>//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          
+          echo "Gefundene Team-ID: $TEAM_ID"
+          echo "Gefundene UUID: $PROFILE_UUID"
+          
+          # 4. DIREKT in Flutters Konfiguration schreiben (Gilt nur für die App, rettet die Plugins!)
+          echo "DEVELOPMENT_TEAM=$TEAM_ID" >> ios/Flutter/Release.xcconfig
+          echo "PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGN_STYLE=Manual" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGN_IDENTITY=Apple Distribution" >> ios/Flutter/Release.xcconfig
+          
+      - name: Flutter build iOS
         script: |
-          # 4. Codemagic schnürt das Paket mit dem frisch eingetragenen Zertifikat
-          xcode-project build-ipa \
-            --workspace "ios/Runner.xcworkspace" \
-            --scheme "Runner" \
-            --config "Release"
-            
+          flutter clean
+          flutter pub get
+          
+          # 5. Flutter hat jetzt die exakten Daten direkt im Quellcode und baut fehlerfrei
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          
       - name: Upload to TestFlight
         script: |
           app-store-connect publish --ipa "build/ios/ipa/*.ipa"
