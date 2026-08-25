@@ -40,10 +40,5 @@ workflows:
           flutter pub get
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
-      - name: Upload to TestFlight
-        script: |
-          IPA_PATH=$(find . -name "*.ipa" | head -n 1)
-          echo "Uploading IPA from: $IPA_PATH"
-          app-store-connect publish "$IPA_PATH"
     artifacts:
       - build/ios/ipa/*.ipa
