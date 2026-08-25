@@ -12,6 +12,9 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
         
+    integrations:
+      app_store_connect: appstore_credentials
+        
     scripts:
       - name: Inject Provisioning Profiles
         script: |
