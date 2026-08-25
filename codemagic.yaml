@@ -8,7 +8,6 @@ workflows:
         - appstore_credentials
       flutter: stable
       
-      # Codemagic holt die Dateien zuverlässig aus deinem UI-Tresor
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.nordwest.aufmassapp
@@ -16,8 +15,6 @@ workflows:
     scripts:
       - name: Inject Provisioning Profiles
         script: |
-          # HIER IST DER FEHLENDE BEFEHL!
-          # Er zwingt Xcode, dein Profil und Zertifikat aus dem Tresor zu nutzen.
           xcode-project use-profiles
           
       - name: Generate export_options.plist manually
@@ -41,12 +38,11 @@ workflows:
         script: |
           flutter clean
           flutter pub get
-          
-          # Flutter hat jetzt sowohl das Profil als auch die korrekte Export-Datei
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
           
       - name: Upload to TestFlight
         script: |
-          app-store-connect publish --ipa "build/ios/ipa/*.ipa"
+          # Korrigierter Upload-Befehl für TestFlight
+          app-store-connect publish --file "$(find build/ios/ipa -name "*.ipa")"
     artifacts:
       - build/ios/ipa/*.ipa
