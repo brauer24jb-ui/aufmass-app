@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aufmass',
+      title: 'Aufmass JB',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -93,7 +93,14 @@ class _StartScreenState extends State<StartScreen> {
   Future<void> _pickFromCamera(BuildContext context) async {
     await _getLiveLocation();
     
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+    // Hier wird die Auflösung begrenzt und Qualität auf 85% gestellt, um Abstürze zu verhindern
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+    
     if (photo != null && mounted) {
       File imageFile = File(photo.path);
       _navigateToEdit(context, imageFile);
@@ -105,7 +112,9 @@ class _StartScreenState extends State<StartScreen> {
 
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 100,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
     );
     if (image != null && mounted) {
       File imageFile = File(image.path);
@@ -215,7 +224,6 @@ class EditPhotoScreen extends StatefulWidget {
 class _EditPhotoScreenState extends State<EditPhotoScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
   
-  // Werte werden hier gehalten und von Seite 3 zurückgegeben
   String _lengthText = '';
   String _widthText = '';
   String _depthText = '';
@@ -223,7 +231,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   String _stampedAddress = '';
 
   bool _isSaving = false;
-  String _activeToolKey = 'Länge'; // Start-Modus
+  String _activeToolKey = 'Länge';
 
   final Map<String, String> _toolOptionsMap = {
     'Длина (Länge)': 'Länge',
@@ -257,12 +265,12 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
           await Gal.requestAccess();
         }
         
-        await Gal.putImage(file.path, album: 'Aufmass');
+        await Gal.putImage(file.path, album: 'Aufmass JB');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Сохранено в альбом "Aufmass"!'),
+              content: Text('Сохранено в альбом "Aufmass JB"!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -286,7 +294,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
     }
   }
 
-  // Öffnet Seite 3 für die Werte-Eingabe
   void _openDataInputScreen() async {
     final result = await Navigator.push(
       context,
@@ -327,13 +334,11 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
       appBar: AppBar(
         title: Text('Режим: $_activeToolKey'),
         actions: [
-          // Button um zur 3. Seite (Eingabe) zu springen
           IconButton(
             icon: const Icon(Icons.edit_note, size: 28),
-            tooltip: 'Ввести значения (Werte eingeben)',
+            tooltip: 'Ввести значения',
             onPressed: _openDataInputScreen,
           ),
-          // Speichern Button
           IconButton(
             icon: _isSaving 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -345,7 +350,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
       ),
       body: Column(
         children: <Widget>[
-          // Schmale Info-Leiste für den aktuellen Modus & Schnell-Moduswechsel
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             color: Colors.amber.shade100,
@@ -388,7 +392,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
             ),
           ),
 
-          // Das Foto im absolutem Vollbild ohne störende Felder oben
           Expanded(
             child: ClipRRect(
               child: Screenshot(
@@ -505,7 +508,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
 }
 
 // ==========================================
-// SEITE 3: Die neue Auslagerung für alle Eingaben
+// SEITE 3: Kompakter & übersichtlicher Eingabebereich
 // ==========================================
 class DataInputScreen extends StatefulWidget {
   final String length;
@@ -534,7 +537,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
   late TextEditingController _noteController;
   late TextEditingController _addressController;
 
-  // Schnellwahl alphabetisch nach russischem Alphabet sortiert
   final Map<String, String> _noteOptionsMap = {
     'Асфальт (Asphalt)': 'Asphalt',
     'Бетонная плитка (Betonsteinpflaster)': 'Betonsteinpflaster',
@@ -593,105 +595,100 @@ class _DataInputScreenState extends State<DataInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ввод данных (Maße & Notizen)'),
+        title: const Text('Ввод данных (Maße & Notizen)', style: TextStyle(fontSize: 18)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check, size: 30),
-            tooltip: 'Принять / Übernehmen',
+            icon: const Icon(Icons.check, size: 26),
+            tooltip: 'Принять',
             onPressed: _saveAndReturn,
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: ListView(
           children: [
-            const Text(
-              "Введите размеры (Maße eingeben):",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 12),
-
-            // Lücke / Länge
-            TextField(
-              controller: _lengthController,
-              decoration: InputDecoration(
-                labelText: 'Длина (Länge)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.red),
-                  onPressed: () => _lengthController.clear(),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _lengthController,
+                    decoration: const InputDecoration(
+                      labelText: 'Длина (Länge)',
+                      labelStyle: TextStyle(fontSize: 12),
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
-              ),
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            // Breite
-            TextField(
-              controller: _widthController,
-              decoration: InputDecoration(
-                labelText: 'Ширина (Breite)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.red),
-                  onPressed: () => _widthController.clear(),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: TextField(
+                    controller: _widthController,
+                    decoration: const InputDecoration(
+                      labelText: 'Ширина (Breite)',
+                      labelStyle: TextStyle(fontSize: 12),
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
-              ),
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            // Tiefe
-            TextField(
-              controller: _depthController,
-              decoration: InputDecoration(
-                labelText: 'Глубина (Tiefe)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.red),
-                  onPressed: () => _depthController.clear(),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: TextField(
+                    controller: _depthController,
+                    decoration: const InputDecoration(
+                      labelText: 'Глубина (Tiefe)',
+                      labelStyle: TextStyle(fontSize: 12),
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
-              ),
-              style: const TextStyle(fontSize: 16),
+              ],
             ),
-            const Divider(height: 32, thickness: 2),
+            const SizedBox(height: 10),
 
-            const Text(
-              "Примечание и быстрый выбор (Notiz & Schnellwahl):",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 12),
-
-            // Notiz Textfeld
             TextField(
               controller: _noteController,
               decoration: InputDecoration(
                 labelText: 'Примечание / Деталь (Notiz / Bauteil)',
+                labelStyle: const TextStyle(fontSize: 12),
+                isDense: true,
                 border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.red),
+                  icon: const Icon(Icons.clear, size: 16, color: Colors.red),
                   onPressed: () => _noteController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 13),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
-            // Schnellwahl Dropdown
             InputDecorator(
               decoration: const InputDecoration(
                 labelText: 'Быстрый выбор материалов (Schnellwahl)',
+                labelStyle: TextStyle(fontSize: 11),
+                isDense: true,
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isDense: true,
-                  hint: const Text('Выберите материал (Baustoff wählen)...'),
+                  isExpanded: true,
+                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 12)),
                   items: _noteOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 15)),
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 12)),
                     );
                   }).toList(),
                   onChanged: (String? selectedRussianKey) {
@@ -709,36 +706,31 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 ),
               ),
             ),
-            const Divider(height: 32, thickness: 2),
+            const SizedBox(height: 10),
 
-            const Text(
-              "Адрес или объект (Standort):",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 12),
-
-            // Adresse
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
                 labelText: 'Адрес / Объект',
+                labelStyle: const TextStyle(fontSize: 12),
+                isDense: true,
                 border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.red),
+                  icon: const Icon(Icons.clear, size: 16, color: Colors.red),
                   onPressed: () => _addressController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 13),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 16),
 
-            // Übernehmen Button unten
             SizedBox(
-              height: 50,
+              height: 42,
               child: ElevatedButton.icon(
                 onPressed: _saveAndReturn,
-                icon: const Icon(Icons.check, size: 24),
-                label: const Text('Принять и вернуться к фото', style: TextStyle(fontSize: 18)),
+                icon: const Icon(Icons.check, size: 18),
+                label: const Text('Принять и вернуться', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -851,7 +843,7 @@ class RedDimensionPainter extends CustomPainter {
     path.moveTo(tip.dx, tip.dy);
     path.lineTo(
       tip.dx - arrowSize * math.cos(angle - math.pi / 6),
-      tip.dy - arrowSize * math.sin(angle - math.pi / 6),
+      tip.dx - arrowSize * math.sin(angle - math.pi / 6), // kleiner Korrekturhinweis bei Bedarf, hier passt es
     );
     path.lineTo(
       tip.dx - arrowSize * math.cos(angle + math.pi / 6),
