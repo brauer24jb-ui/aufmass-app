@@ -79,6 +79,7 @@ class _StartScreenState extends State<StartScreen> {
 
       if (placemarks.isNotEmpty && mounted) {
         Placemark place = placemarks[0];
+        // Hier wird die Adresse sauber zusammengebaut (Straße Hausnummer, PLZ Ort)
         setState(() {
           _locationMessage = "${place.street ?? ''}, ${place.postalCode ?? ''} ${place.locality ?? ''}";
         });
@@ -252,7 +253,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
     });
 
     try {
-      // WICHTIG: Auflösung auf 5.0 hochgeschraubt für gestochen scharfe Bilder!
       final Uint8List? capturedBytes = await _screenshotController.capture(pixelRatio: 5.0);
       
       if (capturedBytes != null) {
@@ -406,7 +406,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                     final imageSize = snapshot.data!;
                     
                     return Center(
-                      // WICHTIG: AspectRatio verhindert jegliches Verziehen des Bildes!
                       child: AspectRatio(
                         aspectRatio: imageSize.width / imageSize.height,
                         child: GestureDetector(
@@ -458,7 +457,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                             children: [
                               Image.file(
                                 widget.currentImage,
-                                fit: BoxFit.contain, // Stellt sicher, dass das Bild nicht gestreckt wird
+                                fit: BoxFit.contain, 
                               ),
 
                               CustomPaint(
@@ -467,7 +466,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                                   widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
                                   depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
                                   notePos: _notePos, noteLabel: _noteText,
-                                  addressPos: _addressPos, addressLabel: _stampedAddress,
+                                  addressPos: _addressPos, addressLabel: _stampedAddress, // Das Label enthält nur noch die Adresse
                                 ),
                               ),
                             ],
@@ -761,7 +760,8 @@ class RedDimensionPainter extends CustomPainter {
       _drawTextBadge(canvas, notePos!, noteLabel, Colors.red, scale: scale);
     }
     if (addressPos != null && addressLabel.isNotEmpty) {
-      _drawTextBadge(canvas, addressPos!, "Standort: $addressLabel", Colors.black87, scale: scale);
+      // HIER GEÄNDERT: Das "Standort: " wurde entfernt. Es wird nur noch der reine addressLabel gezeichnet.
+      _drawTextBadge(canvas, addressPos!, addressLabel, Colors.black87, scale: scale);
     }
   }
 
@@ -770,9 +770,9 @@ class RedDimensionPainter extends CustomPainter {
 
     final paint = Paint()
       ..color = Colors.red
-      ..strokeWidth = math.max(4.0, 5.0 * scale) // Ein kleines bisschen dünner für mehr Schärfe
+      ..strokeWidth = math.max(4.0, 5.0 * scale)
       ..strokeCap = StrokeCap.round
-      ..isAntiAlias = true; // Kantenglättung für scharfe Linien
+      ..isAntiAlias = true;
 
     canvas.drawLine(start, end, paint);
     if (twoArrows) {
