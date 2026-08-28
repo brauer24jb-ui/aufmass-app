@@ -93,7 +93,6 @@ class _StartScreenState extends State<StartScreen> {
   Future<void> _pickFromCamera(BuildContext context) async {
     await _getLiveLocation();
     
-    // Hier wird die Auflösung begrenzt und Qualität auf 85% gestellt, um Abstürze zu verhindern
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.camera,
       maxWidth: 1920,
@@ -253,7 +252,8 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
     });
 
     try {
-      final Uint8List? capturedBytes = await _screenshotController.capture(pixelRatio: 3.0);
+      // WICHTIG: Auflösung auf 5.0 hochgeschraubt für gestochen scharfe Bilder!
+      final Uint8List? capturedBytes = await _screenshotController.capture(pixelRatio: 5.0);
       
       if (capturedBytes != null) {
         final tempDir = await Directory.systemTemp.createTemp();
@@ -396,100 +396,84 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
             child: ClipRRect(
               child: Screenshot(
                 controller: _screenshotController,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return FutureBuilder<Size>(
-                      future: _getImageSize(widget.currentImage),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
+                child: FutureBuilder<Size>(
+                  future: _getImageSize(widget.currentImage),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                        final imageSize = snapshot.data!;
-                        
-                        final double aspectContainer = constraints.maxWidth / constraints.maxHeight;
-                        final double aspectImage = imageSize.width / imageSize.height;
-
-                        double renderWidth, renderHeight;
-                        if (aspectImage > aspectContainer) {
-                          renderWidth = constraints.maxWidth;
-                          renderHeight = constraints.maxWidth / aspectImage;
-                        } else {
-                          renderHeight = constraints.maxHeight;
-                          renderWidth = constraints.maxHeight * aspectImage;
-                        }
-
-                        return Center(
-                          child: SizedBox(
-                            width: renderWidth,
-                            height: renderHeight,
-                            child: GestureDetector(
-                              onTapDown: (details) {
-                                final pos = details.localPosition;
-                                setState(() {
-                                  if (_activeToolKey == 'Notiz') {
-                                    _notePos = pos;
-                                  } else if (_activeToolKey == 'Standort') {
-                                    _addressPos = pos;
-                                  }
-                                });
-                              },
-                              onPanStart: (details) {
-                                setState(() {
-                                  if (_activeToolKey == 'Länge') {
-                                    _lengthStart = details.localPosition;
-                                    _lengthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Breite') {
-                                    _widthStart = details.localPosition;
-                                    _widthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Tiefe') {
-                                    _depthStart = details.localPosition;
-                                    _depthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Notiz') {
-                                    _notePos = details.localPosition;
-                                  } else if (_activeToolKey == 'Standort') {
-                                    _addressPos = details.localPosition;
-                                  }
-                                });
-                              },
-                              onPanUpdate: (details) {
-                                setState(() {
-                                  if (_activeToolKey == 'Länge') {
-                                    _lengthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Breite') {
-                                    _widthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Tiefe') {
-                                    _depthEnd = details.localPosition;
-                                  } else if (_activeToolKey == 'Notiz') {
-                                    _notePos = details.localPosition;
-                                  } else if (_activeToolKey == 'Standort') {
-                                    _addressPos = details.localPosition;
-                                  }
-                                });
-                              },
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  Image.file(
-                                    widget.currentImage,
-                                    fit: BoxFit.fill,
-                                  ),
-
-                                  CustomPaint(
-                                    painter: RedDimensionPainter(
-                                      lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
-                                      widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
-                                      depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
-                                      notePos: _notePos, noteLabel: _noteText,
-                                      addressPos: _addressPos, addressLabel: _stampedAddress,
-                                    ),
-                                  ),
-                                ],
+                    final imageSize = snapshot.data!;
+                    
+                    return Center(
+                      // WICHTIG: AspectRatio verhindert jegliches Verziehen des Bildes!
+                      child: AspectRatio(
+                        aspectRatio: imageSize.width / imageSize.height,
+                        child: GestureDetector(
+                          onTapDown: (details) {
+                            final pos = details.localPosition;
+                            setState(() {
+                              if (_activeToolKey == 'Notiz') {
+                                _notePos = pos;
+                              } else if (_activeToolKey == 'Standort') {
+                                _addressPos = pos;
+                              }
+                            });
+                          },
+                          onPanStart: (details) {
+                            setState(() {
+                              if (_activeToolKey == 'Länge') {
+                                _lengthStart = details.localPosition;
+                                _lengthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Breite') {
+                                _widthStart = details.localPosition;
+                                _widthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Tiefe') {
+                                _depthStart = details.localPosition;
+                                _depthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Notiz') {
+                                _notePos = details.localPosition;
+                              } else if (_activeToolKey == 'Standort') {
+                                _addressPos = details.localPosition;
+                              }
+                            });
+                          },
+                          onPanUpdate: (details) {
+                            setState(() {
+                              if (_activeToolKey == 'Länge') {
+                                _lengthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Breite') {
+                                _widthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Tiefe') {
+                                _depthEnd = details.localPosition;
+                              } else if (_activeToolKey == 'Notiz') {
+                                _notePos = details.localPosition;
+                              } else if (_activeToolKey == 'Standort') {
+                                _addressPos = details.localPosition;
+                              }
+                            });
+                          },
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.file(
+                                widget.currentImage,
+                                fit: BoxFit.contain, // Stellt sicher, dass das Bild nicht gestreckt wird
                               ),
-                            ),
+
+                              CustomPaint(
+                                painter: RedDimensionPainter(
+                                  lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
+                                  widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
+                                  depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
+                                  notePos: _notePos, noteLabel: _noteText,
+                                  addressPos: _addressPos, addressLabel: _stampedAddress,
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -508,7 +492,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
 }
 
 // ==========================================
-// SEITE 3: Kompakter & übersichtlicher Eingabebereich
+// SEITE 3: Eingabebereich mit hellblauem Hintergrund
 // ==========================================
 class DataInputScreen extends StatefulWidget {
   final String length;
@@ -594,6 +578,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
         title: const Text('Ввод данных (Maße & Notizen)', style: TextStyle(fontSize: 18)),
         actions: [
@@ -605,90 +590,83 @@ class _DataInputScreenState extends State<DataInputScreen> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(14.0),
         child: ListView(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _lengthController,
-                    decoration: const InputDecoration(
-                      labelText: 'Длина (Länge)',
-                      labelStyle: TextStyle(fontSize: 12),
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: _widthController,
-                    decoration: const InputDecoration(
-                      labelText: 'Ширина (Breite)',
-                      labelStyle: TextStyle(fontSize: 12),
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: _depthController,
-                    decoration: const InputDecoration(
-                      labelText: 'Глубина (Tiefe)',
-                      labelStyle: TextStyle(fontSize: 12),
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
+            TextField(
+              controller: _lengthController,
+              decoration: const InputDecoration(
+                labelText: 'Длина (Länge)',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: _widthController,
+              decoration: const InputDecoration(
+                labelText: 'Ширина (Breite)',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: _depthController,
+              decoration: const InputDecoration(
+                labelText: 'Глубина (Tiefe)',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
 
             TextField(
               controller: _noteController,
               decoration: InputDecoration(
-                labelText: 'Примечание / Деталь (Notiz / Bauteil)',
-                labelStyle: const TextStyle(fontSize: 12),
+                labelText: 'Примечание (Notiz / Bauteil)',
+                labelStyle: const TextStyle(fontSize: 11),
                 isDense: true,
                 border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 16, color: Colors.red),
                   onPressed: () => _noteController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 12),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: 'Быстрый выбор материалов (Schnellwahl)',
-                labelStyle: TextStyle(fontSize: 11),
+                labelText: 'Быстрый выбор (Schnellwahl)',
+                labelStyle: TextStyle(fontSize: 10),
                 isDense: true,
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isDense: true,
                   isExpanded: true,
-                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 12)),
+                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
                   items: _noteOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 12)),
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
                     );
                   }).toList(),
                   onChanged: (String? selectedRussianKey) {
@@ -706,31 +684,30 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
 
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
                 labelText: 'Адрес / Объект',
-                labelStyle: const TextStyle(fontSize: 12),
-                isDense: true,
                 border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                filled: true,
+                fillColor: Colors.white,
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, size: 16, color: Colors.red),
+                  icon: const Icon(Icons.clear, size: 18, color: Colors.red),
                   onPressed: () => _addressController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 14),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             SizedBox(
-              height: 42,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: _saveAndReturn,
-                icon: const Icon(Icons.check, size: 18),
-                label: const Text('Принять и вернуться', style: TextStyle(fontSize: 14)),
+                icon: const Icon(Icons.check, size: 20),
+                label: const Text('Принять и вернуться', style: TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -793,8 +770,9 @@ class RedDimensionPainter extends CustomPainter {
 
     final paint = Paint()
       ..color = Colors.red
-      ..strokeWidth = math.max(6.0, 7.5 * scale)
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = math.max(4.0, 5.0 * scale) // Ein kleines bisschen dünner für mehr Schärfe
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true; // Kantenglättung für scharfe Linien
 
     canvas.drawLine(start, end, paint);
     if (twoArrows) {
@@ -811,7 +789,7 @@ class RedDimensionPainter extends CustomPainter {
       text: "  $text  ",
       style: TextStyle(
         color: Colors.white,
-        fontSize: math.max(20.0, 32.0 * scale),
+        fontSize: math.max(18.0, 26.0 * scale),
         fontWeight: FontWeight.bold,
       ),
     );
@@ -821,29 +799,32 @@ class RedDimensionPainter extends CustomPainter {
     );
     textPainter.layout();
 
-    final paddingH = 16.0 * scale;
-    final paddingV = 10.0 * scale;
+    final paddingH = 14.0 * scale;
+    final paddingV = 8.0 * scale;
 
     final rect = Rect.fromCenter(
       center: pos,
       width: textPainter.width + (paddingH * 2),
       height: textPainter.height + (paddingV * 2),
     );
-    final bgPaint = Paint()..color = bgColor;
+    final bgPaint = Paint()
+      ..color = bgColor
+      ..isAntiAlias = true;
+      
     canvas.drawRect(rect, bgPaint);
 
     textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
   }
 
   void _drawArrowHead(Canvas canvas, Offset tip, Offset from, Paint paint, double scale) {
-    final double arrowSize = math.max(20.0, 30.0 * scale);
+    final double arrowSize = math.max(18.0, 25.0 * scale);
     final angle = math.atan2(tip.dy - from.dy, tip.dx - from.dx);
 
     final path = Path();
     path.moveTo(tip.dx, tip.dy);
     path.lineTo(
       tip.dx - arrowSize * math.cos(angle - math.pi / 6),
-      tip.dx - arrowSize * math.sin(angle - math.pi / 6), // kleiner Korrekturhinweis bei Bedarf, hier passt es
+      tip.dy - arrowSize * math.sin(angle - math.pi / 6),
     );
     path.lineTo(
       tip.dx - arrowSize * math.cos(angle + math.pi / 6),
@@ -853,7 +834,8 @@ class RedDimensionPainter extends CustomPainter {
 
     final arrowPaint = Paint()
       ..color = Colors.red
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, arrowPaint);
   }
