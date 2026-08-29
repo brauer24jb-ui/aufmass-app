@@ -4,11 +4,23 @@ import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:gal/gal.dart';
+import 'package:camera/camera.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
 
-void main() {
+// Globale Liste für die verfügbaren Kameras
+List<CameraDescription> cameras = [];
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    cameras = await availableCameras();
+  } catch (e) {
+    debugPrint('Fehler beim Laden der Kamera: $e');
+  }
+  
   runApp(const MyApp());
 }
 
@@ -79,7 +91,6 @@ class _StartScreenState extends State<StartScreen> {
 
       if (placemarks.isNotEmpty && mounted) {
         Placemark place = placemarks[0];
-        // Hier wird die Adresse sauber zusammengebaut (Straße Hausnummer, PLZ Ort)
         setState(() {
           _locationMessage = "${place.street ?? ''}, ${place.postalCode ?? ''} ${place.locality ?? ''}";
         });
@@ -91,20 +102,22 @@ class _StartScreenState extends State<StartScreen> {
     }
   }
 
-  Future<void> _pickFromCamera(BuildContext context) async {
-    await _getLiveLocation();
-    
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
-    
-    if (photo != null && mounted) {
-      File imageFile = File(photo.path);
-      _navigateToEdit(context, imageFile);
+  void _openCustomCamera(BuildContext context) {
+    if (cameras.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Keine Kamera gefunden!')),
+      );
+      return;
     }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomCameraScreen(
+          defaultAddress: _locationMessage,
+        ),
+      ),
+    );
   }
 
   Future<void> _pickFromGallery(BuildContext context) async {
@@ -118,25 +131,22 @@ class _StartScreenState extends State<StartScreen> {
     );
     if (image != null && mounted) {
       File imageFile = File(image.path);
-      _navigateToEdit(context, imageFile);
-    }
-  }
-
-  void _navigateToEdit(BuildContext context, File imageFile) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditPhotoScreen(
-          currentImage: imageFile,
-          defaultAddress: _locationMessage,
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditPhotoScreen(
+            currentImage: imageFile,
+            defaultAddress: _locationMessage,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
         title: const Text('Замеры на стройке (Start)'),
       ),
@@ -172,7 +182,7 @@ class _StartScreenState extends State<StartScreen> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton.icon(
-                  onPressed: () => _pickFromCamera(context),
+                  onPressed: () => _openCustomCamera(context),
                   icon: const Icon(Icons.camera_alt, size: 28),
                   label: const Text('Сделать фото', style: TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
@@ -191,6 +201,7 @@ class _StartScreenState extends State<StartScreen> {
                   icon: const Icon(Icons.photo_library, size: 28),
                   label: const Text('Выбрать из галереи', style: TextStyle(fontSize: 18)),
                   style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
                     side: const BorderSide(color: Colors.blue, width: 2),
                   ),
@@ -198,6 +209,127 @@ class _StartScreenState extends State<StartScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// SEITE 1.5: Eigene Live-Kamera 
+// ==========================================
+class CustomCameraScreen extends StatefulWidget {
+  final String defaultAddress;
+  const CustomCameraScreen({super.key, required this.defaultAddress});
+
+  @override
+  State<CustomCameraScreen> createState() => _CustomCameraScreenState();
+}
+
+class _CustomCameraScreenState extends State<CustomCameraScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+  bool _isTakingPicture = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CameraController(
+      cameras.first,
+      ResolutionPreset.veryHigh,
+      enableAudio: false,
+    );
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _takePictureAndGo() async {
+    if (_isTakingPicture) return;
+
+    try {
+      setState(() {
+        _isTakingPicture = true;
+      });
+      await _initializeControllerFuture;
+      
+      final image = await _controller.takePicture();
+      
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditPhotoScreen(
+            currentImage: File(image.path),
+            defaultAddress: widget.defaultAddress,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Fehler beim Fotografieren: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTakingPicture = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: FutureBuilder<void>(
+          future: _initializeControllerFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: CameraPreview(_controller),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 30.0),
+                      child: GestureDetector(
+                        onTap: _takePictureAndGo,
+                        child: Container(
+                          height: 80,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.8),
+                            border: Border.all(color: Colors.white, width: 4),
+                          ),
+                          child: _isTakingPicture 
+                              ? const Center(child: CircularProgressIndicator()) 
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return const Center(child: CircularProgressIndicator(color: Colors.white));
+            }
+          },
         ),
       ),
     );
@@ -227,24 +359,35 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   String _lengthText = '';
   String _widthText = '';
   String _depthText = '';
-  String _noteText = '';
+  
+  // Die 3 separaten Texte
+  String _noteText1 = '';
+  String _noteText2 = '';
+  String _noteText3 = '';
   String _stampedAddress = '';
 
   bool _isSaving = false;
   String _activeToolKey = 'Länge';
 
+  // HIER GEÄNDERT: Wieder die 3 separaten Notizen im Menü
   final Map<String, String> _toolOptionsMap = {
     'Длина (Länge)': 'Länge',
     'Ширина (Breite)': 'Breite',
     'Глубина (Tiefe)': 'Tiefe',
-    'Заметка / Деталь (Notiz / Bauteil)': 'Notiz',
+    '1. Заметка (1. Notiz)': 'Notiz 1',
+    '2. Заметка (2. Notiz)': 'Notiz 2',
+    '3. Заметка (3. Notiz)': 'Notiz 3',
     'Адрес (Standort)': 'Standort',
   };
 
   Offset? _lengthStart, _lengthEnd;
   Offset? _widthStart, _widthEnd;
   Offset? _depthStart, _depthEnd;
-  Offset? _notePos;
+  
+  // 3 separate Positionen für die Notizen
+  Offset? _notePos1;
+  Offset? _notePos2;
+  Offset? _notePos3;
   Offset? _addressPos;
 
   Future<void> _saveToGallery(BuildContext context) async {
@@ -302,7 +445,9 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
           length: _lengthText,
           width: _widthText,
           depth: _depthText,
-          note: _noteText,
+          note1: _noteText1,
+          note2: _noteText2,
+          note3: _noteText3,
           address: _stampedAddress.isNotEmpty ? _stampedAddress : widget.defaultAddress,
         ),
       ),
@@ -313,7 +458,9 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
         _lengthText = result['length'] ?? '';
         _widthText = result['width'] ?? '';
         _depthText = result['depth'] ?? '';
-        _noteText = result['note'] ?? '';
+        _noteText1 = result['note1'] ?? '';
+        _noteText2 = result['note2'] ?? '';
+        _noteText3 = result['note3'] ?? '';
         _stampedAddress = result['address'] ?? '';
       });
     }
@@ -326,6 +473,43 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
       }
     }
     return _toolOptionsMap.keys.first;
+  }
+
+  void _handleTouch(Offset localPosition) {
+    setState(() {
+      if (_activeToolKey == 'Notiz 1') {
+        _notePos1 = localPosition;
+      } else if (_activeToolKey == 'Notiz 2') {
+        _notePos2 = localPosition;
+      } else if (_activeToolKey == 'Notiz 3') {
+        _notePos3 = localPosition;
+      } else if (_activeToolKey == 'Standort') {
+        _addressPos = localPosition;
+      }
+    });
+  }
+
+  void _handlePan(Offset localPosition, bool isStart) {
+    setState(() {
+      if (_activeToolKey == 'Länge') {
+        if (isStart) _lengthStart = localPosition;
+        _lengthEnd = localPosition;
+      } else if (_activeToolKey == 'Breite') {
+        if (isStart) _widthStart = localPosition;
+        _widthEnd = localPosition;
+      } else if (_activeToolKey == 'Tiefe') {
+        if (isStart) _depthStart = localPosition;
+        _depthEnd = localPosition;
+      } else if (_activeToolKey == 'Notiz 1') {
+        _notePos1 = localPosition;
+      } else if (_activeToolKey == 'Notiz 2') {
+        _notePos2 = localPosition;
+      } else if (_activeToolKey == 'Notiz 3') {
+        _notePos3 = localPosition;
+      } else if (_activeToolKey == 'Standort') {
+        _addressPos = localPosition;
+      }
+    });
   }
 
   @override
@@ -409,49 +593,9 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                       child: AspectRatio(
                         aspectRatio: imageSize.width / imageSize.height,
                         child: GestureDetector(
-                          onTapDown: (details) {
-                            final pos = details.localPosition;
-                            setState(() {
-                              if (_activeToolKey == 'Notiz') {
-                                _notePos = pos;
-                              } else if (_activeToolKey == 'Standort') {
-                                _addressPos = pos;
-                              }
-                            });
-                          },
-                          onPanStart: (details) {
-                            setState(() {
-                              if (_activeToolKey == 'Länge') {
-                                _lengthStart = details.localPosition;
-                                _lengthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Breite') {
-                                _widthStart = details.localPosition;
-                                _widthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Tiefe') {
-                                _depthStart = details.localPosition;
-                                _depthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Notiz') {
-                                _notePos = details.localPosition;
-                              } else if (_activeToolKey == 'Standort') {
-                                _addressPos = details.localPosition;
-                              }
-                            });
-                          },
-                          onPanUpdate: (details) {
-                            setState(() {
-                              if (_activeToolKey == 'Länge') {
-                                _lengthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Breite') {
-                                _widthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Tiefe') {
-                                _depthEnd = details.localPosition;
-                              } else if (_activeToolKey == 'Notiz') {
-                                _notePos = details.localPosition;
-                              } else if (_activeToolKey == 'Standort') {
-                                _addressPos = details.localPosition;
-                              }
-                            });
-                          },
+                          onTapDown: (details) => _handleTouch(details.localPosition),
+                          onPanStart: (details) => _handlePan(details.localPosition, true),
+                          onPanUpdate: (details) => _handlePan(details.localPosition, false),
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
@@ -459,14 +603,15 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                                 widget.currentImage,
                                 fit: BoxFit.contain, 
                               ),
-
                               CustomPaint(
                                 painter: RedDimensionPainter(
                                   lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
                                   widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
                                   depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
-                                  notePos: _notePos, noteLabel: _noteText,
-                                  addressPos: _addressPos, addressLabel: _stampedAddress, // Das Label enthält nur noch die Adresse
+                                  notePos1: _notePos1, noteLabel1: _noteText1,
+                                  notePos2: _notePos2, noteLabel2: _noteText2,
+                                  notePos3: _notePos3, noteLabel3: _noteText3,
+                                  addressPos: _addressPos, addressLabel: _stampedAddress,
                                 ),
                               ),
                             ],
@@ -491,13 +636,15 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
 }
 
 // ==========================================
-// SEITE 3: Eingabebereich mit hellblauem Hintergrund
+// SEITE 3: Eingabebereich mit 3 getrennten Notizen
 // ==========================================
 class DataInputScreen extends StatefulWidget {
   final String length;
   final String width;
   final String depth;
-  final String note;
+  final String note1;
+  final String note2;
+  final String note3;
   final String address;
 
   const DataInputScreen({
@@ -505,7 +652,9 @@ class DataInputScreen extends StatefulWidget {
     required this.length,
     required this.width,
     required this.depth,
-    required this.note,
+    required this.note1,
+    required this.note2,
+    required this.note3,
     required this.address,
   });
 
@@ -517,7 +666,12 @@ class _DataInputScreenState extends State<DataInputScreen> {
   late TextEditingController _lengthController;
   late TextEditingController _widthController;
   late TextEditingController _depthController;
-  late TextEditingController _noteController;
+  
+  // 3 verschiedene Controller
+  late TextEditingController _noteController1;
+  late TextEditingController _noteController2;
+  late TextEditingController _noteController3;
+  
   late TextEditingController _addressController;
 
   final Map<String, String> _noteOptionsMap = {
@@ -550,7 +704,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _lengthController = TextEditingController(text: widget.length);
     _widthController = TextEditingController(text: widget.width);
     _depthController = TextEditingController(text: widget.depth);
-    _noteController = TextEditingController(text: widget.note);
+    _noteController1 = TextEditingController(text: widget.note1);
+    _noteController2 = TextEditingController(text: widget.note2);
+    _noteController3 = TextEditingController(text: widget.note3);
     _addressController = TextEditingController(text: widget.address);
   }
 
@@ -559,7 +715,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _lengthController.dispose();
     _widthController.dispose();
     _depthController.dispose();
-    _noteController.dispose();
+    _noteController1.dispose();
+    _noteController2.dispose();
+    _noteController3.dispose();
     _addressController.dispose();
     super.dispose();
   }
@@ -569,9 +727,24 @@ class _DataInputScreenState extends State<DataInputScreen> {
       'length': _lengthController.text,
       'width': _widthController.text,
       'depth': _depthController.text,
-      'note': _noteController.text,
+      'note1': _noteController1.text,
+      'note2': _noteController2.text,
+      'note3': _noteController3.text,
       'address': _addressController.text,
     });
+  }
+
+  void _appendToNote(String? selectedRussianKey, TextEditingController controller) {
+    if (selectedRussianKey != null) {
+      final germanValue = _noteOptionsMap[selectedRussianKey]!;
+      setState(() {
+        if (controller.text.isEmpty) {
+          controller.text = germanValue;
+        } else {
+          controller.text = "${controller.text} - $germanValue";
+        }
+      });
+    }
   }
 
   @override
@@ -603,7 +776,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: _widthController,
               decoration: const InputDecoration(
@@ -615,7 +787,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: _depthController,
               decoration: const InputDecoration(
@@ -626,12 +797,15 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 24),
+            const Divider(height: 32, thickness: 2),
 
+            // =========================
+            // BLOCK 1
+            // =========================
             TextField(
-              controller: _noteController,
+              controller: _noteController1,
               decoration: InputDecoration(
-                labelText: 'Примечание (Notiz / Bauteil)',
+                labelText: '1. Примечание (1. Notiz / Bauteil)',
                 labelStyle: const TextStyle(fontSize: 11),
                 isDense: true,
                 border: const OutlineInputBorder(),
@@ -640,16 +814,15 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 16, color: Colors.red),
-                  onPressed: () => _noteController.clear(),
+                  onPressed: () => _noteController1.clear(),
                 ),
               ),
               style: const TextStyle(fontSize: 12),
             ),
-            const SizedBox(height: 10),
-
+            const SizedBox(height: 6),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: 'Быстрый выбор (Schnellwahl)',
+                labelText: '1. Быстрый выбор (1. Schnellwahl)',
                 labelStyle: TextStyle(fontSize: 10),
                 isDense: true,
                 border: OutlineInputBorder(),
@@ -668,23 +841,111 @@ class _DataInputScreenState extends State<DataInputScreen> {
                       child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
                     );
                   }).toList(),
-                  onChanged: (String? selectedRussianKey) {
-                    if (selectedRussianKey != null) {
-                      final germanValue = _noteOptionsMap[selectedRussianKey]!;
-                      setState(() {
-                        if (_noteController.text.isEmpty) {
-                          _noteController.text = germanValue;
-                        } else {
-                          _noteController.text = "${_noteController.text} - $germanValue";
-                        }
-                      });
-                    }
-                  },
+                  onChanged: (val) => _appendToNote(val, _noteController1),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
+            // =========================
+            // BLOCK 2
+            // =========================
+            TextField(
+              controller: _noteController2,
+              decoration: InputDecoration(
+                labelText: '2. Примечание (2. Notiz / Bauteil)',
+                labelStyle: const TextStyle(fontSize: 11),
+                isDense: true,
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear, size: 16, color: Colors.red),
+                  onPressed: () => _noteController2.clear(),
+                ),
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 6),
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: '2. Быстрый выбор (2. Schnellwahl)',
+                labelStyle: TextStyle(fontSize: 10),
+                isDense: true,
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isDense: true,
+                  isExpanded: true,
+                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
+                  items: _noteOptionsMap.keys.map((String russianLabel) {
+                    return DropdownMenuItem<String>(
+                      value: russianLabel,
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
+                    );
+                  }).toList(),
+                  onChanged: (val) => _appendToNote(val, _noteController2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // =========================
+            // BLOCK 3
+            // =========================
+            TextField(
+              controller: _noteController3,
+              decoration: InputDecoration(
+                labelText: '3. Примечание (3. Notiz / Bauteil)',
+                labelStyle: const TextStyle(fontSize: 11),
+                isDense: true,
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear, size: 16, color: Colors.red),
+                  onPressed: () => _noteController3.clear(),
+                ),
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 6),
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: '3. Быстрый выбор (3. Schnellwahl)',
+                labelStyle: TextStyle(fontSize: 10),
+                isDense: true,
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isDense: true,
+                  isExpanded: true,
+                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
+                  items: _noteOptionsMap.keys.map((String russianLabel) {
+                    return DropdownMenuItem<String>(
+                      value: russianLabel,
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
+                    );
+                  }).toList(),
+                  onChanged: (val) => _appendToNote(val, _noteController3),
+                ),
+              ),
+            ),
+            const Divider(height: 32, thickness: 2),
+
+            // =========================
+            // ADRESSE
+            // =========================
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
@@ -700,7 +961,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 24),
-
             SizedBox(
               height: 48,
               child: ElevatedButton.icon(
@@ -713,6 +973,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -730,8 +991,15 @@ class RedDimensionPainter extends CustomPainter {
   final String widthLabel;
   final Offset? depthStart, depthEnd;
   final String depthLabel;
-  final Offset? notePos;
-  final String noteLabel;
+  
+  // Die 3 separaten Notiz-Positionen und Labels
+  final Offset? notePos1;
+  final String noteLabel1;
+  final Offset? notePos2;
+  final String noteLabel2;
+  final Offset? notePos3;
+  final String noteLabel3;
+  
   final Offset? addressPos;
   final String addressLabel;
 
@@ -739,7 +1007,9 @@ class RedDimensionPainter extends CustomPainter {
     this.lengthStart, this.lengthEnd, required this.lengthLabel,
     this.widthStart, this.widthEnd, required this.widthLabel,
     this.depthStart, this.depthEnd, required this.depthLabel,
-    this.notePos, required this.noteLabel,
+    this.notePos1, required this.noteLabel1,
+    this.notePos2, required this.noteLabel2,
+    this.notePos3, required this.noteLabel3,
     this.addressPos, required this.addressLabel,
   });
 
@@ -756,11 +1026,19 @@ class RedDimensionPainter extends CustomPainter {
     if (depthStart != null && depthEnd != null) {
       _drawArrowLineWithLabel(canvas, depthStart!, depthEnd!, depthLabel, twoArrows: false, scale: scale);
     }
-    if (notePos != null && noteLabel.isNotEmpty) {
-      _drawTextBadge(canvas, notePos!, noteLabel, Colors.red, scale: scale);
+    
+    // Zeichnet nun wieder die 3 Notizen getrennt an ihren eigenen Positionen
+    if (notePos1 != null && noteLabel1.isNotEmpty) {
+      _drawTextBadge(canvas, notePos1!, noteLabel1, Colors.red, scale: scale);
     }
+    if (notePos2 != null && noteLabel2.isNotEmpty) {
+      _drawTextBadge(canvas, notePos2!, noteLabel2, Colors.red, scale: scale);
+    }
+    if (notePos3 != null && noteLabel3.isNotEmpty) {
+      _drawTextBadge(canvas, notePos3!, noteLabel3, Colors.red, scale: scale);
+    }
+    
     if (addressPos != null && addressLabel.isNotEmpty) {
-      // HIER GEÄNDERT: Das "Standort: " wurde entfernt. Es wird nur noch der reine addressLabel gezeichnet.
       _drawTextBadge(canvas, addressPos!, addressLabel, Colors.black87, scale: scale);
     }
   }
@@ -786,32 +1064,37 @@ class RedDimensionPainter extends CustomPainter {
 
   void _drawTextBadge(Canvas canvas, Offset pos, String text, Color bgColor, {required double scale}) {
     final textSpan = TextSpan(
-      text: "  $text  ",
+      text: text,
       style: TextStyle(
         color: Colors.white,
         fontSize: math.max(18.0, 26.0 * scale),
         fontWeight: FontWeight.bold,
+        height: 1.3,
       ),
     );
     final textPainter = TextPainter(
       text: textSpan,
       textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
     );
     textPainter.layout();
 
-    final paddingH = 14.0 * scale;
-    final paddingV = 8.0 * scale;
+    final paddingH = 20.0 * scale; 
+    final paddingV = 12.0 * scale; 
 
     final rect = Rect.fromCenter(
       center: pos,
       width: textPainter.width + (paddingH * 2),
       height: textPainter.height + (paddingV * 2),
     );
+    
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(8.0 * scale)); 
+
     final bgPaint = Paint()
       ..color = bgColor
       ..isAntiAlias = true;
       
-    canvas.drawRect(rect, bgPaint);
+    canvas.drawRRect(rrect, bgPaint);
 
     textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
   }
