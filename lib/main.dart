@@ -13,6 +13,196 @@ import 'dart:ui' as ui;
 // Globale Liste für die verfügbaren Kameras
 List<CameraDescription> cameras = [];
 
+// ==========================================
+// SPRACH-STEUERUNG UND ÜBERSETZUNGEN
+// ==========================================
+enum AppLang { ruDe, ukDe, ruUk, de }
+AppLang globalAppLang = AppLang.ruDe;
+
+class Term {
+  final String ru;
+  final String uk;
+  final String de;
+
+  const Term({required this.ru, required this.uk, required this.de});
+
+  String get display {
+    switch (globalAppLang) {
+      case AppLang.ruDe: return '$ru ($de)';
+      case AppLang.ukDe: return '$uk ($de)';
+      case AppLang.ruUk: return '$ru ($uk)';
+      case AppLang.de: return de;
+    }
+  }
+
+  String get value {
+    switch (globalAppLang) {
+      case AppLang.ruDe: return de;
+      case AppLang.ukDe: return de;
+      case AppLang.ruUk: return uk;
+      case AppLang.de: return de;
+    }
+  }
+}
+
+// Werkzeuge / Menüs
+final Map<String, Term> toolTerms = {
+  'Länge': const Term(ru: 'Длина', uk: 'Довжина', de: 'Länge'),
+  'Breite': const Term(ru: 'Ширина', uk: 'Ширина', de: 'Breite'),
+  'Tiefe': const Term(ru: 'Глубина', uk: 'Глибина', de: 'Tiefe'),
+  'Notiz 1': const Term(ru: '1. Заметка', uk: '1. Нотатка', de: '1. Notiz'),
+  'Notiz 2': const Term(ru: '2. Заметка', uk: '2. Нотатка', de: '2. Notiz'),
+  'Notiz 3': const Term(ru: '3. Заметка', uk: '3. Нотатка', de: '3. Notiz'),
+  'Standort': const Term(ru: 'Адрес', uk: 'Адреса', de: 'Standort'),
+};
+
+// 1. Versorger
+final List<Term> versorgerTerms = [
+  const Term(ru: 'Вода', uk: 'Вода', de: 'Wasser'),
+  const Term(ru: 'Газ', uk: 'Газ', de: 'Gas'),
+  const Term(ru: 'Электричество', uk: 'Електрика', de: 'Strom'),
+];
+
+// 2. Material
+final List<Term> materialTerms = [
+  const Term(ru: 'Асфальт', uk: 'Асфальт', de: 'Asphalt'),
+  const Term(ru: 'Бетонная плитка', uk: 'Бетонна плитка', de: 'Betonsteinpflaster'),
+  const Term(ru: 'Бетонный щебень', uk: 'Бетонний щебінь', de: 'Betonschotter'),
+  const Term(ru: 'Бордюр', uk: 'Бордюр', de: 'Bordstein'),
+  const Term(ru: 'Дробленый песок', uk: 'Дроблений пісок', de: 'Brechsand'),
+  const Term(ru: 'Грунт', uk: 'Ґрунт', de: 'Boden'),
+  const Term(ru: 'Кабель', uk: 'Кабель', de: 'Kabel'),
+  const Term(ru: 'Клинкер', uk: 'Клінкер', de: 'Klinkerpflaster'),
+  const Term(ru: 'Колодец', uk: 'Колодязь', de: 'Schacht'),
+  const Term(ru: 'Лоток', uk: 'Жолоб', de: 'Rinne'),
+  const Term(ru: 'Минеральная смесь', uk: 'Мінеральна суміш', de: 'Mineralgemisch'),
+  const Term(ru: 'Трубы KG', uk: 'Труби KG', de: 'KG Rohre'),
+  const Term(ru: 'Трубы KG 2000', uk: 'Труби KG 2000', de: 'KG 2000 Rohre'),
+  const Term(ru: 'Узловая брусчатка', uk: 'Замкова бруківка', de: 'Verbundsteinpflaster'),
+  const Term(ru: 'Засыпной песок', uk: 'Засипний пісок', de: 'Füllsand'),
+];
+
+// 3. Tätigkeit
+final List<Term> taetigkeitTerms = [
+  const Term(ru: 'Установлено', uk: 'Встановлено', de: 'gesetzt'),
+  const Term(ru: 'Экскаватор', uk: 'Екскаватор', de: 'Bagger'),
+  const Term(ru: 'Погрузчик', uk: 'Навантажувач', de: 'Radlader'),
+  const Term(ru: 'Насос', uk: 'Насос', de: 'Pumpe'),
+  const Term(ru: 'Часы', uk: 'Години', de: 'Stunden'),
+  const Term(ru: 'Демонтировано', uk: 'Демонтовано', de: 'aufgenommen'),
+  const Term(ru: 'Колодец/Яма', uk: 'Котлован/Яма', de: 'Grube'),
+  const Term(ru: 'Почасовая оплата', uk: 'Погодинна оплата', de: 'Stundenlohn'),
+  const Term(ru: 'Траншея', uk: 'Траншея', de: 'Graben'),
+  const Term(ru: 'Уложено', uk: 'Покладено', de: 'verlegt'),
+  const Term(ru: 'Шурф', uk: 'Шурф', de: 'Suchschachtung'),
+];
+
+final Term backTerm = const Term(ru: 'Назад', uk: 'Назад', de: 'Zurück');
+
+// Übersetzungen der restlichen UI
+String get uiStartTitle {
+  if (globalAppLang == AppLang.ukDe) return 'Заміри на будівництві';
+  if (globalAppLang == AppLang.de) return 'Aufmaß Baustelle';
+  return 'Замеры на стройке';
+}
+String get uiLiveLocation {
+  if (globalAppLang == AppLang.ukDe) return 'Поточна адреса (Live-Standort):';
+  if (globalAppLang == AppLang.de) return 'Aktueller Standort (Live):';
+  return 'Текущий адрес (Live-Standort):';
+}
+String get uiRefresh {
+  if (globalAppLang == AppLang.ukDe) return 'Оновити адресу';
+  if (globalAppLang == AppLang.de) return 'Adresse aktualisieren';
+  return 'Обновить адрес';
+}
+String get uiPhoto {
+  if (globalAppLang == AppLang.ukDe) return 'Зробити фото';
+  if (globalAppLang == AppLang.de) return 'Foto machen';
+  return 'Сделать фото';
+}
+String get uiGallery {
+  if (globalAppLang == AppLang.ukDe) return 'Вибрати з галереї';
+  if (globalAppLang == AppLang.de) return 'Aus Galerie wählen';
+  return 'Выбрать из галереи';
+}
+String get uiMode {
+  if (globalAppLang == AppLang.de) return 'Modus:';
+  if (globalAppLang == AppLang.ukDe) return 'Режим:';
+  return 'Режим:';
+}
+String get uiData {
+  if (globalAppLang == AppLang.ukDe) return 'Дані';
+  if (globalAppLang == AppLang.de) return 'Daten';
+  return 'Данные';
+}
+String get uiInputTitle {
+  if (globalAppLang == AppLang.ukDe) return 'Введення даних (Maße & Notizen)';
+  if (globalAppLang == AppLang.de) return 'Dateneingabe (Maße & Notizen)';
+  return 'Ввод данных (Maße & Notizen)';
+}
+String get uiAcceptReturn {
+  if (globalAppLang == AppLang.ukDe) return 'Прийняти та повернутися';
+  if (globalAppLang == AppLang.de) return 'Übernehmen & Zurück';
+  return 'Принять и вернуться';
+}
+String get uiAddress {
+  if (globalAppLang == AppLang.ukDe) return 'Адреса / Об\'єкт';
+  if (globalAppLang == AppLang.de) return 'Adresse / Objekt';
+  return 'Адрес / Объект';
+}
+
+String get uiNote1 {
+  if (globalAppLang == AppLang.ukDe) return '1. Примітка (1. Versorger)';
+  if (globalAppLang == AppLang.ruUk) return '1. Заметка (1. Постачальник)';
+  if (globalAppLang == AppLang.de) return '1. Notiz (Versorger)';
+  return '1. Примечание (1. Auswahl Versorger)';
+}
+String get uiNote2 {
+  if (globalAppLang == AppLang.ukDe) return '2. Примітка (2. Material)';
+  if (globalAppLang == AppLang.ruUk) return '2. Заметка (2. Матеріал)';
+  if (globalAppLang == AppLang.de) return '2. Notiz (Material)';
+  return '2. Примечание (2. Material)';
+}
+String get uiNote3 {
+  if (globalAppLang == AppLang.ukDe) return '3. Примітка (3. Tätigkeit)';
+  if (globalAppLang == AppLang.ruUk) return '3. Заметка (3. Діяльність)';
+  if (globalAppLang == AppLang.de) return '3. Notiz (Tätigkeit)';
+  return '3. Примечание (3. Tätigkeit)';
+}
+String get uiSelect1 {
+  if (globalAppLang == AppLang.ukDe) return '1. Вибір постачальника (1. Auswahl Versorger)';
+  if (globalAppLang == AppLang.ruUk) return '1. Выбор поставщика (1. Постачальник)';
+  if (globalAppLang == AppLang.de) return '1. Auswahl (Versorger)';
+  return '1. Выбор поставщика (1. Auswahl Versorger)';
+}
+String get uiSelect2 {
+  if (globalAppLang == AppLang.ukDe) return '2. Вибір матеріалу (2. Auswahl Material)';
+  if (globalAppLang == AppLang.ruUk) return '2. Выбор материала (2. Матеріал)';
+  if (globalAppLang == AppLang.de) return '2. Auswahl (Material)';
+  return '2. Выбор материала (2. Auswahl Material)';
+}
+String get uiSelect3 {
+  if (globalAppLang == AppLang.ukDe) return '3. Вибір діяльності (3. Auswahl Tätigkeit)';
+  if (globalAppLang == AppLang.ruUk) return '3. Выбор деятельности (3. Діяльність)';
+  if (globalAppLang == AppLang.de) return '3. Auswahl (Tätigkeit)';
+  return '3. Выбор деятельности (3. Auswahl Tätigkeit)';
+}
+String get uiHint1 {
+  if (globalAppLang == AppLang.ukDe) return 'Виберіть постачальника...';
+  if (globalAppLang == AppLang.de) return 'Versorger wählen...';
+  return 'Выберите поставщика...';
+}
+String get uiHint2 {
+  if (globalAppLang == AppLang.ukDe) return 'Виберіть матеріал...';
+  if (globalAppLang == AppLang.de) return 'Material wählen...';
+  return 'Выберите материал...';
+}
+String get uiHint3 {
+  if (globalAppLang == AppLang.ukDe) return 'Виберіть діяльність...';
+  if (globalAppLang == AppLang.de) return 'Tätigkeit wählen...';
+  return 'Выберите деятельность...';
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -149,7 +339,30 @@ class _StartScreenState extends State<StartScreen> {
     return Scaffold(
       backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
-        title: const Text('Замеры на стройке (Start)'),
+        title: Text(uiStartTitle),
+        actions: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<AppLang>(
+              value: globalAppLang,
+              icon: const Icon(Icons.language, color: Colors.white),
+              dropdownColor: Colors.blue.shade100,
+              onChanged: (AppLang? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    globalAppLang = newValue;
+                  });
+                }
+              },
+              items: const [
+                DropdownMenuItem(value: AppLang.ruDe, child: Text('RU -> DE', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: AppLang.ukDe, child: Text('UK -> DE', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: AppLang.ruUk, child: Text('RU -> UK', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: AppLang.de, child: Text('DE', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: Center(
         child: Padding(
@@ -159,9 +372,9 @@ class _StartScreenState extends State<StartScreen> {
             children: <Widget>[
               const Icon(Icons.location_pin, size: 60, color: Colors.blue),
               const SizedBox(height: 16),
-              const Text(
-                "Текущий адрес (Live-Standort):",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              Text(
+                uiLiveLocation,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 4),
               Text(
@@ -174,7 +387,7 @@ class _StartScreenState extends State<StartScreen> {
               TextButton.icon(
                 onPressed: _getLiveLocation,
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Обновить адрес'),
+                label: Text(uiRefresh),
               ),
 
               const SizedBox(height: 30),
@@ -185,7 +398,7 @@ class _StartScreenState extends State<StartScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _openCustomCamera(context),
                   icon: const Icon(Icons.camera_alt, size: 28),
-                  label: const Text('Сделать фото', style: TextStyle(fontSize: 18)),
+                  label: Text(uiPhoto, style: const TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -200,7 +413,7 @@ class _StartScreenState extends State<StartScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => _pickFromGallery(context),
                   icon: const Icon(Icons.photo_library, size: 28),
-                  label: const Text('Выбрать из галереи', style: TextStyle(fontSize: 18)),
+                  label: Text(uiGallery, style: const TextStyle(fontSize: 18)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
@@ -369,15 +582,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   bool _isSaving = false;
   String _activeToolKey = 'Länge';
 
-  final Map<String, String> _toolOptionsMap = {
-    'Длина (Länge)': 'Länge',
-    'Ширина (Breite)': 'Breite',
-    'Глубина (Tiefe)': 'Tiefe',
-    '1. Заметка (1. Notiz)': 'Notiz 1',
-    '2. Заметка (2. Notiz)': 'Notiz 2',
-    '3. Заметка (3. Notiz)': 'Notiz 3',
-    'Адрес (Standort)': 'Standort',
-  };
+  late Map<String, String> _toolOptionsMap;
 
   Offset? _lengthStart, _lengthEnd;
   Offset? _widthStart, _widthEnd;
@@ -387,6 +592,16 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   Offset? _notePos2;
   Offset? _notePos3;
   Offset? _addressPos;
+
+  @override
+  void initState() {
+    super.initState();
+    // Erstellt die Auswahlliste dynamisch anhand der gewählten Sprache
+    _toolOptionsMap = {};
+    toolTerms.forEach((key, term) {
+      _toolOptionsMap[term.display] = key;
+    });
+  }
 
   Future<void> _saveToGallery(BuildContext context) async {
     setState(() {
@@ -411,7 +626,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Сохранено в альбом "Aufmass JB"!'),
+              content: Text('Gespeichert in "Aufmass JB"!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -421,7 +636,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка при сохранении: $e'),
+            content: Text('Fehler: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -516,7 +731,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
       backgroundColor: Colors.black, 
       extendBodyBehindAppBar: true, 
       appBar: AppBar(
-        title: Text('Режим: $_activeToolKey', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('$uiMode ${toolTerms[_activeToolKey]?.display ?? _activeToolKey}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         foregroundColor: Colors.white, 
         backgroundColor: Colors.transparent, 
         elevation: 0, 
@@ -531,21 +746,19 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_note, size: 28),
-            tooltip: 'Ввести значения',
             onPressed: _openDataInputScreen,
           ),
           IconButton(
             icon: _isSaving 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_alt),
-            tooltip: 'Сохранить',
             onPressed: _isSaving ? null : () => _saveToGallery(context),
           ),
         ],
       ),
       body: Stack(
         children: <Widget>[
-          // 1. DAS VOLLFLÄCHIGE BILD (Liegt im Hintergrund)
+          // VOLLFLÄCHIGES BILD
           Positioned.fill(
             child: Screenshot(
               controller: _screenshotController,
@@ -574,9 +787,9 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                             ),
                             CustomPaint(
                               painter: RedDimensionPainter(
-                                lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
-                                widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
-                                depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
+                                lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "${toolTerms['Länge']!.value}: $_lengthText",
+                                widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "${toolTerms['Breite']!.value}: $_widthText",
+                                depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "${toolTerms['Tiefe']!.value}: $_depthText",
                                 notePos1: _notePos1, noteLabel1: _noteText1,
                                 notePos2: _notePos2, noteLabel2: _noteText2,
                                 notePos3: _notePos3, noteLabel3: _noteText3,
@@ -593,44 +806,43 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
             ),
           ),
 
-          // 2. DAS MATTE TRANSPARENTE SCHNELLWAHL-MENÜ
+          // SCHWEBENDES MENÜ (SCHMALER & DYNAMISCH)
           Positioned(
-            top: MediaQuery.of(context).padding.top + kToolbarHeight + 8, // Leicht abgerückt von der AppBar
-            left: 12, // ANPASSUNG: Minimaler Rand an den Seiten, damit es wie eine schwebende "Pille" wirkt
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+            left: 12, 
             right: 12,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.0), // ANPASSUNG: Abgerundete Ecken
+              borderRadius: BorderRadius.circular(16.0),
               child: BackdropFilter(
                 filter: ui.ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
                 child: Container(
-                  // ANPASSUNG: vertical padding von 8 auf 4 verkleinert (macht das Menü in der Höhe schmaler)
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), 
                   color: Colors.white.withOpacity(0.75), 
                   child: Row(
                     children: [
-                      const Text("Режим:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                      Text(uiMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
-                            isDense: true, // ANPASSUNG: Reduziert die Bauhöhe des Dropdowns drastisch
+                            isDense: true, 
                             value: _getCurrentToolDisplayValue(),
                             isExpanded: true,
                             itemHeight: null, 
                             dropdownColor: Colors.white, 
-                            items: _toolOptionsMap.keys.map((String russianDisplay) {
+                            items: _toolOptionsMap.keys.map((String displayLabel) {
                               return DropdownMenuItem<String>(
-                                value: russianDisplay,
+                                value: displayLabel,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
-                                  child: Text(russianDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                  child: Text(displayLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                                 ),
                               );
                             }).toList(),
-                            onChanged: (String? selectedRussianDisplay) {
-                              if (selectedRussianDisplay != null) {
+                            onChanged: (String? selectedDisplayLabel) {
+                              if (selectedDisplayLabel != null) {
                                 setState(() {
-                                  _activeToolKey = _toolOptionsMap[selectedRussianDisplay]!;
+                                  _activeToolKey = _toolOptionsMap[selectedDisplayLabel]!;
                                 });
                               }
                             },
@@ -641,12 +853,12 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                       ElevatedButton.icon(
                         onPressed: _openDataInputScreen,
                         icon: const Icon(Icons.list_alt, size: 16),
-                        label: const Text('Данные', style: TextStyle(fontSize: 12)),
+                        label: Text(uiData, style: const TextStyle(fontSize: 12)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          minimumSize: const Size(0, 32), // ANPASSUNG: Button etwas flacher gemacht
+                          minimumSize: const Size(0, 32),
                         ),
                       ),
                     ],
@@ -704,46 +916,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
   
   late TextEditingController _addressController;
 
-  // Nur für Block 1 (Versorger)
-  final Map<String, String> _versorgerOptionsMap = {
-    'Вода (Wasser)': 'Wasser',
-    'Газ (Gas)': 'Gas',
-    'Электричество (Strom)': 'Strom',
-  };
-
-  // Nur für Block 2 (Material)
-  final Map<String, String> _materialOptionsMap = {
-    'Асфальт (Asphalt)': 'Asphalt',
-    'Бетонная плитка (Betonsteinpflaster)': 'Betonsteinpflaster',
-    'Бетонный щебень (Betonschotter)': 'Betonschotter',
-    'Бордюр (Bordstein)': 'Bordstein',
-    'Дробленый песок (Brechsand)': 'Brechsand',
-    'Грунт (Boden)': 'Boden',
-    'Кабель (Kabel)': 'Kabel',
-    'Клинкер (Klinkerpflaster)': 'Klinkerpflaster',
-    'Колодец (Schacht)': 'Schacht',
-    'Лоток (Rinne)': 'Rinne',
-    'Минеральная смесь (Mineralgemisch)': 'Mineralgemisch',
-    'Трубы KG (KG Rohre)': 'KG Rohre',
-    'Трубы KG 2000 (KG 2000 Rohre)': 'KG 2000 Rohre',
-    'Узловая брусчатка (Verbundsteinpflaster)': 'Verbundsteinpflaster',
-    'Засыпной песок (Füllsand)': 'Füllsand',
-  };
-
-  // Nur für Block 3 (Tätigkeit)
-  final Map<String, String> _taetigkeitOptionsMap = {
-    'Установлено (gesetzt)': 'gesetzt',
-    'Экскаватор (Bagger)': 'Bagger',
-    'Погрузчик (Radlader)': 'Radlader',
-    'Насос (Pumpe)': 'Pumpe',
-    'Часы (Stunden)': 'Stunden',
-    'Демонтировано (aufgenommen)': 'aufgenommen',
-    'Колодец/Яма (Grube)': 'Grube',
-    'Почасовая оплата (Stundenlohn)': 'Stundenlohn',
-    'Траншея (Graben)': 'Graben',
-    'Уложено (verlegt)': 'verlegt',
-    'Шурф (Suchschachtung)': 'Suchschachtung',
-  };
+  late Map<String, String> _versorgerOptionsMap;
+  late Map<String, String> _materialOptionsMap;
+  late Map<String, String> _taetigkeitOptionsMap;
 
   @override
   void initState() {
@@ -755,6 +930,11 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _noteController2 = TextEditingController(text: widget.note2);
     _noteController3 = TextEditingController(text: widget.note3);
     _addressController = TextEditingController(text: widget.address);
+
+    // Dynamische Listen-Generierung basierend auf der aktuellen Sprache
+    _versorgerOptionsMap = { for (var t in versorgerTerms) t.display : t.value };
+    _materialOptionsMap = { for (var t in materialTerms) t.display : t.value };
+    _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.display : t.value };
   }
 
   @override
@@ -781,14 +961,14 @@ class _DataInputScreenState extends State<DataInputScreen> {
     });
   }
 
-  void _appendToNote(String? selectedRussianKey, TextEditingController controller, Map<String, String> mapToUse) {
-    if (selectedRussianKey != null) {
-      final germanValue = mapToUse[selectedRussianKey]!;
+  void _appendToNote(String? selectedDisplayLabel, TextEditingController controller, Map<String, String> mapToUse) {
+    if (selectedDisplayLabel != null) {
+      final targetValue = mapToUse[selectedDisplayLabel]!;
       setState(() {
         if (controller.text.isEmpty) {
-          controller.text = germanValue;
+          controller.text = targetValue;
         } else {
-          controller.text = "${controller.text} - $germanValue";
+          controller.text = "${controller.text} - $targetValue";
         }
       });
     }
@@ -799,11 +979,10 @@ class _DataInputScreenState extends State<DataInputScreen> {
     return Scaffold(
       backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
-        title: const Text('Ввод данных (Maße & Notizen)', style: TextStyle(fontSize: 18)),
+        title: Text(uiInputTitle, style: const TextStyle(fontSize: 18)),
         actions: [
           IconButton(
             icon: const Icon(Icons.check, size: 26),
-            tooltip: 'Принять',
             onPressed: _saveAndReturn,
           ),
         ],
@@ -814,9 +993,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
           children: [
             TextField(
               controller: _lengthController,
-              decoration: const InputDecoration(
-                labelText: 'Длина (Länge)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: toolTerms['Länge']!.display,
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
               ),
@@ -825,9 +1004,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _widthController,
-              decoration: const InputDecoration(
-                labelText: 'Ширина (Breite)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: toolTerms['Breite']!.display,
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
               ),
@@ -836,9 +1015,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _depthController,
-              decoration: const InputDecoration(
-                labelText: 'Глубина (Tiefe)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: toolTerms['Tiefe']!.display,
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
               ),
@@ -852,7 +1031,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
             TextField(
               controller: _noteController1,
               decoration: InputDecoration(
-                labelText: '1. Примечание (1. Auswahl Versorger)',
+                labelText: uiNote1,
                 labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
@@ -868,40 +1047,40 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 6),
             InputDecorator(
-              decoration: const InputDecoration(
-                labelText: '1. Выбор поставщика (1. Auswahl Versorger)',
-                labelStyle: TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: uiSelect1,
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: null,
-                  hint: const Text('Выберите поставщика...', style: TextStyle(fontSize: 16)),
+                  hint: Text(uiHint1, style: const TextStyle(fontSize: 16)),
                   items: [
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         child: Row(
                           children: [
-                            Icon(Icons.arrow_back, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                            const Icon(Icons.arrow_back, color: Colors.blue),
+                            const SizedBox(width: 8),
+                            Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
                     ),
-                    ..._versorgerOptionsMap.keys.map((String russianLabel) {
+                    ..._versorgerOptionsMap.keys.map((String displayLabel) {
                       return DropdownMenuItem<String>(
-                        value: russianLabel,
+                        value: displayLabel,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12.0), 
-                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(displayLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       );
                     }),
@@ -921,7 +1100,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
             TextField(
               controller: _noteController2,
               decoration: InputDecoration(
-                labelText: '2. Примечание (2. Material)',
+                labelText: uiNote2,
                 labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
@@ -937,40 +1116,40 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 6),
             InputDecorator(
-              decoration: const InputDecoration(
-                labelText: '2. Выбор материала (2. Auswahl Material)',
-                labelStyle: TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: uiSelect2,
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: null,
-                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 16)),
+                  hint: Text(uiHint2, style: const TextStyle(fontSize: 16)),
                   items: [
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         child: Row(
                           children: [
-                            Icon(Icons.arrow_back, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                            const Icon(Icons.arrow_back, color: Colors.blue),
+                            const SizedBox(width: 8),
+                            Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
                     ),
-                    ..._materialOptionsMap.keys.map((String russianLabel) {
+                    ..._materialOptionsMap.keys.map((String displayLabel) {
                       return DropdownMenuItem<String>(
-                        value: russianLabel,
+                        value: displayLabel,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(displayLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       );
                     }),
@@ -990,7 +1169,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
             TextField(
               controller: _noteController3,
               decoration: InputDecoration(
-                labelText: '3. Примечание (3. Tätigkeit)',
+                labelText: uiNote3,
                 labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
@@ -1006,40 +1185,40 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 6),
             InputDecorator(
-              decoration: const InputDecoration(
-                labelText: '3. Выбор деятельности (3. Auswahl Tätigkeit)',
-                labelStyle: TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: uiSelect3,
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: null,
-                  hint: const Text('Выберите деятельность...', style: TextStyle(fontSize: 16)),
+                  hint: Text(uiHint3, style: const TextStyle(fontSize: 16)),
                   items: [
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         child: Row(
                           children: [
-                            Icon(Icons.arrow_back, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                            const Icon(Icons.arrow_back, color: Colors.blue),
+                            const SizedBox(width: 8),
+                            Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
                     ),
-                    ..._taetigkeitOptionsMap.keys.map((String russianLabel) {
+                    ..._taetigkeitOptionsMap.keys.map((String displayLabel) {
                       return DropdownMenuItem<String>(
-                        value: russianLabel,
+                        value: displayLabel,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(displayLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       );
                     }),
@@ -1056,7 +1235,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
-                labelText: 'Адрес / Объект',
+                labelText: uiAddress,
                 border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
@@ -1073,7 +1252,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: ElevatedButton.icon(
                 onPressed: _saveAndReturn,
                 icon: const Icon(Icons.check, size: 20),
-                label: const Text('Принять и вернуться', style: TextStyle(fontSize: 16)),
+                label: Text(uiAcceptReturn, style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -1150,7 +1329,10 @@ class RedDimensionPainter extends CustomPainter {
   }
 
   void _drawArrowLineWithParallelLabel(Canvas canvas, Offset start, Offset end, String label, {required bool twoArrows, required double scale}) {
-    if ((end - start).distance < 5 || label.isEmpty || label == "Länge: " || label == "Breite: " || label == "Tiefe: ") {
+    // Endet das Label auf ": ", bedeutet das, dass noch kein Maß eingegeben wurde
+    bool isEmptyLabel = label.endsWith(": ");
+    
+    if ((end - start).distance < 5 || label.isEmpty || isEmptyLabel) {
       _drawPlainLine(canvas, start, end, twoArrows, scale);
       return;
     }
