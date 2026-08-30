@@ -512,6 +512,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade200, 
       appBar: AppBar(
         title: Text('Режим: $_activeToolKey'),
         actions: [
@@ -579,49 +580,54 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
           ),
 
           Expanded(
-            child: ClipRRect(
-              child: Screenshot(
-                controller: _screenshotController,
-                child: FutureBuilder<Size>(
-                  future: _getImageSize(widget.currentImage),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+            // ANPASSUNG: Padding unten wurde von 120.0 auf 60.0 reduziert (Bild ist jetzt ca. 60 Pixel länger unten).
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 60.0), 
+              child: ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Screenshot(
+                  controller: _screenshotController,
+                  child: FutureBuilder<Size>(
+                    future: _getImageSize(widget.currentImage),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                    final imageSize = snapshot.data!;
-                    
-                    return Center(
-                      child: AspectRatio(
-                        aspectRatio: imageSize.width / imageSize.height,
-                        child: GestureDetector(
-                          onTapDown: (details) => _handleTouch(details.localPosition),
-                          onPanStart: (details) => _handlePan(details.localPosition, true),
-                          onPanUpdate: (details) => _handlePan(details.localPosition, false),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.file(
-                                widget.currentImage,
-                                fit: BoxFit.contain, 
-                              ),
-                              CustomPaint(
-                                painter: RedDimensionPainter(
-                                  lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
-                                  widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
-                                  depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
-                                  notePos1: _notePos1, noteLabel1: _noteText1,
-                                  notePos2: _notePos2, noteLabel2: _noteText2,
-                                  notePos3: _notePos3, noteLabel3: _noteText3,
-                                  addressPos: _addressPos, addressLabel: _stampedAddress,
+                      final imageSize = snapshot.data!;
+                      
+                      return Center(
+                        child: AspectRatio(
+                          aspectRatio: imageSize.width / imageSize.height,
+                          child: GestureDetector(
+                            onTapDown: (details) => _handleTouch(details.localPosition),
+                            onPanStart: (details) => _handlePan(details.localPosition, true),
+                            onPanUpdate: (details) => _handlePan(details.localPosition, false),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.file(
+                                  widget.currentImage,
+                                  fit: BoxFit.contain, 
                                 ),
-                              ),
-                            ],
+                                CustomPaint(
+                                  painter: RedDimensionPainter(
+                                    lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
+                                    widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
+                                    depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
+                                    notePos1: _notePos1, noteLabel1: _noteText1,
+                                    notePos2: _notePos2, noteLabel2: _noteText2,
+                                    notePos3: _notePos3, noteLabel3: _noteText3,
+                                    addressPos: _addressPos, addressLabel: _stampedAddress,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -854,7 +860,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   itemHeight: null,
                   hint: const Text('Выберите поставщика...', style: TextStyle(fontSize: 16)),
                   items: [
-                    // DER NEUE ZURÜCK-PFEIL
                     const DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
@@ -924,7 +929,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   itemHeight: null,
                   hint: const Text('Выберите материал...', style: TextStyle(fontSize: 16)),
                   items: [
-                    // DER NEUE ZURÜCK-PFEIL
                     const DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
@@ -994,7 +998,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   itemHeight: null,
                   hint: const Text('Выберите деятельность...', style: TextStyle(fontSize: 16)),
                   items: [
-                    // DER NEUE ZURÜCK-PFEIL
                     const DropdownMenuItem<String>(
                       value: 'BACK',
                       child: Padding(
