@@ -360,7 +360,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   String _widthText = '';
   String _depthText = '';
   
-  // Die 3 separaten Texte
   String _noteText1 = '';
   String _noteText2 = '';
   String _noteText3 = '';
@@ -369,7 +368,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   bool _isSaving = false;
   String _activeToolKey = 'Länge';
 
-  // HIER GEÄNDERT: Wieder die 3 separaten Notizen im Menü
   final Map<String, String> _toolOptionsMap = {
     'Длина (Länge)': 'Länge',
     'Ширина (Breite)': 'Breite',
@@ -384,7 +382,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   Offset? _widthStart, _widthEnd;
   Offset? _depthStart, _depthEnd;
   
-  // 3 separate Positionen für die Notizen
   Offset? _notePos1;
   Offset? _notePos2;
   Offset? _notePos3;
@@ -667,34 +664,50 @@ class _DataInputScreenState extends State<DataInputScreen> {
   late TextEditingController _widthController;
   late TextEditingController _depthController;
   
-  // 3 verschiedene Controller
   late TextEditingController _noteController1;
   late TextEditingController _noteController2;
   late TextEditingController _noteController3;
   
   late TextEditingController _addressController;
 
-  final Map<String, String> _noteOptionsMap = {
+  // Nur für Block 1 (Versorger)
+  final Map<String, String> _versorgerOptionsMap = {
+    'Вода (Wasser)': 'Wasser',
+    'Газ (Gas)': 'Gas',
+    'Электричество (Strom)': 'Strom',
+  };
+
+  // Nur für Block 2 (Material)
+  final Map<String, String> _materialOptionsMap = {
     'Асфальт (Asphalt)': 'Asphalt',
     'Бетонная плитка (Betonsteinpflaster)': 'Betonsteinpflaster',
     'Бетонный щебень (Betonschotter)': 'Betonschotter',
     'Бордюр (Bordstein)': 'Bordstein',
     'Дробленый песок (Brechsand)': 'Brechsand',
-    'Вода (Wasser)': 'Wasser',
-    'Газ (Gas)': 'Gas',
     'Грунт (Boden)': 'Boden',
-    'Демонтировано (aufgenommen)': 'aufgenommen',
     'Кабель (Kabel)': 'Kabel',
     'Клинкер (Klinkerpflaster)': 'Klinkerpflaster',
-    'Колодец/Яма (Grube)': 'Grube',
+    'Колодец (Schacht)': 'Schacht',
     'Лоток (Rinne)': 'Rinne',
-    'Почасовая оплата (Stundenlohn)': 'Stundenlohn',
     'Минеральная смесь (Mineralgemisch)': 'Mineralgemisch',
-    'Траншея (Graben)': 'Graben',
+    'Трубы KG (KG Rohre)': 'KG Rohre',
+    'Трубы KG 2000 (KG 2000 Rohre)': 'KG 2000 Rohre',
     'Узловая брусчатка (Verbundsteinpflaster)': 'Verbundsteinpflaster',
-    'Уложено (verlegt)': 'verlegt',
-    'Электричество (Strom)': 'Strom',
     'Засыпной песок (Füllsand)': 'Füllsand',
+  };
+
+  // Nur für Block 3 (Tätigkeit)
+  final Map<String, String> _taetigkeitOptionsMap = {
+    'Установлено (gesetzt)': 'gesetzt',
+    'Экскаватор (Bagger)': 'Bagger',
+    'Погрузчик (Radlader)': 'Radlader',
+    'Насос (Pumpe)': 'Pumpe',
+    'Часы (Stunden)': 'Stunden',
+    'Демонтировано (aufgenommen)': 'aufgenommen',
+    'Колодец/Яма (Grube)': 'Grube',
+    'Почасовая оплата (Stundenlohn)': 'Stundenlohn',
+    'Траншея (Graben)': 'Graben',
+    'Уложено (verlegt)': 'verlegt',
     'Шурф (Suchschachtung)': 'Suchschachtung',
   };
 
@@ -734,9 +747,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
     });
   }
 
-  void _appendToNote(String? selectedRussianKey, TextEditingController controller) {
+  void _appendToNote(String? selectedRussianKey, TextEditingController controller, Map<String, String> mapToUse) {
     if (selectedRussianKey != null) {
-      final germanValue = _noteOptionsMap[selectedRussianKey]!;
+      final germanValue = mapToUse[selectedRussianKey]!;
       setState(() {
         if (controller.text.isEmpty) {
           controller.text = germanValue;
@@ -800,13 +813,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
             const Divider(height: 32, thickness: 2),
 
             // =========================
-            // BLOCK 1
+            // BLOCK 1 (Versorger)
             // =========================
             TextField(
               controller: _noteController1,
               decoration: InputDecoration(
-                labelText: '1. Примечание (1. Notiz / Bauteil)',
-                labelStyle: const TextStyle(fontSize: 11),
+                labelText: '1. Примечание (1. Auswahl Versorger)',
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -817,13 +830,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController1.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: '1. Быстрый выбор (1. Schnellwahl)',
-                labelStyle: TextStyle(fontSize: 10),
+                labelText: '1. Выбор поставщика (1. Auswahl Versorger)',
+                labelStyle: TextStyle(fontSize: 14),
                 isDense: true,
                 border: OutlineInputBorder(),
                 filled: true,
@@ -834,27 +847,27 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isDense: true,
                   isExpanded: true,
-                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
-                  items: _noteOptionsMap.keys.map((String russianLabel) {
+                  hint: const Text('Выберите поставщика...', style: TextStyle(fontSize: 16)),
+                  items: _versorgerOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
                     );
                   }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController1),
+                  onChanged: (val) => _appendToNote(val, _noteController1, _versorgerOptionsMap),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
             // =========================
-            // BLOCK 2
+            // BLOCK 2 (Material)
             // =========================
             TextField(
               controller: _noteController2,
               decoration: InputDecoration(
-                labelText: '2. Примечание (2. Notiz / Bauteil)',
-                labelStyle: const TextStyle(fontSize: 11),
+                labelText: '2. Примечание (2. Material)',
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -865,13 +878,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController2.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: '2. Быстрый выбор (2. Schnellwahl)',
-                labelStyle: TextStyle(fontSize: 10),
+                labelText: '2. Выбор материала (2. Auswahl Material)',
+                labelStyle: TextStyle(fontSize: 14),
                 isDense: true,
                 border: OutlineInputBorder(),
                 filled: true,
@@ -882,27 +895,27 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isDense: true,
                   isExpanded: true,
-                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
-                  items: _noteOptionsMap.keys.map((String russianLabel) {
+                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 16)),
+                  items: _materialOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
                     );
                   }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController2),
+                  onChanged: (val) => _appendToNote(val, _noteController2, _materialOptionsMap),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
             // =========================
-            // BLOCK 3
+            // BLOCK 3 (Tätigkeit)
             // =========================
             TextField(
               controller: _noteController3,
               decoration: InputDecoration(
-                labelText: '3. Примечание (3. Notiz / Bauteil)',
-                labelStyle: const TextStyle(fontSize: 11),
+                labelText: '3. Примечание (3. Tätigkeit)',
+                labelStyle: const TextStyle(fontSize: 14),
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -913,13 +926,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController3.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: '3. Быстрый выбор (3. Schnellwahl)',
-                labelStyle: TextStyle(fontSize: 10),
+                labelText: '3. Выбор деятельности (3. Auswahl Tätigkeit)',
+                labelStyle: TextStyle(fontSize: 14),
                 isDense: true,
                 border: OutlineInputBorder(),
                 filled: true,
@@ -930,22 +943,19 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isDense: true,
                   isExpanded: true,
-                  hint: const Text('Выберите материал...', style: TextStyle(fontSize: 11)),
-                  items: _noteOptionsMap.keys.map((String russianLabel) {
+                  hint: const Text('Выберите деятельность...', style: TextStyle(fontSize: 16)),
+                  items: _taetigkeitOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 11)),
+                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
                     );
                   }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController3),
+                  onChanged: (val) => _appendToNote(val, _noteController3, _taetigkeitOptionsMap),
                 ),
               ),
             ),
             const Divider(height: 32, thickness: 2),
 
-            // =========================
-            // ADRESSE
-            // =========================
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
@@ -958,7 +968,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _addressController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -992,7 +1002,6 @@ class RedDimensionPainter extends CustomPainter {
   final Offset? depthStart, depthEnd;
   final String depthLabel;
   
-  // Die 3 separaten Notiz-Positionen und Labels
   final Offset? notePos1;
   final String noteLabel1;
   final Offset? notePos2;
@@ -1018,16 +1027,15 @@ class RedDimensionPainter extends CustomPainter {
     final double scale = size.width / 800.0;
 
     if (lengthStart != null && lengthEnd != null) {
-      _drawArrowLineWithLabel(canvas, lengthStart!, lengthEnd!, lengthLabel, twoArrows: true, scale: scale);
+      _drawArrowLineWithParallelLabel(canvas, lengthStart!, lengthEnd!, lengthLabel, twoArrows: true, scale: scale);
     }
     if (widthStart != null && widthEnd != null) {
-      _drawArrowLineWithLabel(canvas, widthStart!, widthEnd!, widthLabel, twoArrows: true, scale: scale);
+      _drawArrowLineWithParallelLabel(canvas, widthStart!, widthEnd!, widthLabel, twoArrows: true, scale: scale);
     }
     if (depthStart != null && depthEnd != null) {
-      _drawArrowLineWithLabel(canvas, depthStart!, depthEnd!, depthLabel, twoArrows: false, scale: scale);
+      _drawArrowLineWithParallelLabel(canvas, depthStart!, depthEnd!, depthLabel, twoArrows: false, scale: scale);
     }
     
-    // Zeichnet nun wieder die 3 Notizen getrennt an ihren eigenen Positionen
     if (notePos1 != null && noteLabel1.isNotEmpty) {
       _drawTextBadge(canvas, notePos1!, noteLabel1, Colors.red, scale: scale);
     }
@@ -1043,8 +1051,11 @@ class RedDimensionPainter extends CustomPainter {
     }
   }
 
-  void _drawArrowLineWithLabel(Canvas canvas, Offset start, Offset end, String label, {required bool twoArrows, required double scale}) {
-    if ((end - start).distance < 5) return;
+  void _drawArrowLineWithParallelLabel(Canvas canvas, Offset start, Offset end, String label, {required bool twoArrows, required double scale}) {
+    if ((end - start).distance < 5 || label.isEmpty || label == "Länge: " || label == "Breite: " || label == "Tiefe: ") {
+      _drawPlainLine(canvas, start, end, twoArrows, scale);
+      return;
+    }
 
     final paint = Paint()
       ..color = Colors.red
@@ -1059,7 +1070,70 @@ class RedDimensionPainter extends CustomPainter {
     _drawArrowHead(canvas, end, start, paint, scale);
 
     final center = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
-    _drawTextBadge(canvas, center, label, Colors.red, scale: scale);
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    double angle = math.atan2(dy, dx);
+
+    if (dx < 0) {
+      angle += math.pi;
+    }
+
+    final textSpan = TextSpan(
+      text: label,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: math.max(18.0, 26.0 * scale),
+        fontWeight: FontWeight.bold,
+        height: 1.3,
+      ),
+    );
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+    textPainter.layout();
+
+    final paddingH = 20.0 * scale; 
+    final paddingV = 12.0 * scale; 
+
+    final badgeWidth = textPainter.width + (paddingH * 2);
+    final badgeHeight = textPainter.height + (paddingV * 2);
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+
+    final rect = Rect.fromCenter(
+      center: const Offset(0, 0),
+      width: badgeWidth,
+      height: badgeHeight,
+    );
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(8.0 * scale)); 
+
+    final bgPaint = Paint()
+      ..color = Colors.red
+      ..isAntiAlias = true;
+      
+    canvas.drawRRect(rrect, bgPaint);
+    textPainter.paint(canvas, Offset(-textPainter.width / 2, -textPainter.height / 2));
+
+    canvas.restore();
+  }
+
+  void _drawPlainLine(Canvas canvas, Offset start, Offset end, bool twoArrows, double scale) {
+    if ((end - start).distance < 5) return;
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = math.max(4.0, 5.0 * scale)
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    canvas.drawLine(start, end, paint);
+    if (twoArrows) {
+      _drawArrowHead(canvas, start, end, paint, scale);
+    }
+    _drawArrowHead(canvas, end, start, paint, scale);
   }
 
   void _drawTextBadge(Canvas canvas, Offset pos, String text, Color bgColor, {required double scale}) {
