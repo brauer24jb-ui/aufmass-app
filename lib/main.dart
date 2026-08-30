@@ -203,9 +203,6 @@ String get uiHint3 {
   return 'Выберите деятельность...';
 }
 
-// ==========================================
-// START DER APP
-// ==========================================
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -599,6 +596,7 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   @override
   void initState() {
     super.initState();
+    // Erstellt die Auswahlliste dynamisch anhand der gewählten Sprache
     _toolOptionsMap = {};
     toolTerms.forEach((key, term) {
       _toolOptionsMap[term.display] = key;
@@ -822,7 +820,8 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                   color: Colors.white.withOpacity(0.75), 
                   child: Row(
                     children: [
-                      Text(uiMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                      // Schriftgröße auf 12 reduziert für das iPhone
+                      Text(uiMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonHideUnderline(
@@ -838,7 +837,8 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                     displayLabel,
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                                    // Schriftgröße auf 12 reduziert
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 );
@@ -847,7 +847,8 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                             items: _toolOptionsMap.keys.map((String displayLabel) {
                               return DropdownMenuItem<String>(
                                 value: displayLabel,
-                                child: Text(displayLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                // Schriftgröße auf 12 reduziert
+                                child: Text(displayLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                               );
                             }).toList(),
                             onChanged: (String? selectedDisplayLabel) {
@@ -989,7 +990,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
     return Scaffold(
       backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
-        title: Text(uiInputTitle, style: const TextStyle(fontSize: 18)),
+        title: Text(uiInputTitle, style: const TextStyle(fontSize: 16)), // leicht verkleinert
         actions: [
           IconButton(
             icon: const Icon(Icons.check, size: 26),
@@ -1009,7 +1010,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1020,7 +1021,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1031,7 +1032,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const Divider(height: 32, thickness: 2),
 
@@ -1042,7 +1043,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController1,
               decoration: InputDecoration(
                 labelText: uiNote1,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1053,13 +1054,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController1.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect1,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1070,7 +1071,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint1, style: const TextStyle(fontSize: 16)),
+                  hint: Text(uiHint1, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1078,7 +1079,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         children: [
                           const Icon(Icons.arrow_back, color: Colors.blue),
                           const SizedBox(width: 8),
-                          Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          Text(backTerm.display, style: const TextStyle(fontSize: 14, color: Colors.blue, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -1087,7 +1088,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1110,7 +1111,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController2,
               decoration: InputDecoration(
                 labelText: uiNote2,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1121,13 +1122,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController2.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect2,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1138,7 +1139,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint2, style: const TextStyle(fontSize: 16)),
+                  hint: Text(uiHint2, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1146,7 +1147,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         children: [
                           const Icon(Icons.arrow_back, color: Colors.blue),
                           const SizedBox(width: 8),
-                          Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          Text(backTerm.display, style: const TextStyle(fontSize: 14, color: Colors.blue, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -1155,7 +1156,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1178,7 +1179,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController3,
               decoration: InputDecoration(
                 labelText: uiNote3,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1189,13 +1190,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController3.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect3,
-                labelStyle: const TextStyle(fontSize: 14),
+                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1206,7 +1207,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint3, style: const TextStyle(fontSize: 16)),
+                  hint: Text(uiHint3, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1214,7 +1215,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         children: [
                           const Icon(Icons.arrow_back, color: Colors.blue),
                           const SizedBox(width: 8),
-                          Text(backTerm.display, style: const TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          Text(backTerm.display, style: const TextStyle(fontSize: 14, color: Colors.blue, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -1223,7 +1224,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1251,7 +1252,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _addressController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -1259,7 +1260,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: ElevatedButton.icon(
                 onPressed: _saveAndReturn,
                 icon: const Icon(Icons.check, size: 20),
-                label: Text(uiAcceptReturn, style: const TextStyle(fontSize: 16)),
+                label: Text(uiAcceptReturn, style: const TextStyle(fontSize: 15)), // Button Schrift leicht verkleinert
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
