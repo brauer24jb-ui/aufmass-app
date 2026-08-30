@@ -8,6 +8,7 @@ import 'package:camera/camera.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 // Globale Liste für die verfügbaren Kameras
 List<CameraDescription> cameras = [];
@@ -512,9 +513,21 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade200, 
+      backgroundColor: Colors.black, 
+      extendBodyBehindAppBar: true, 
       appBar: AppBar(
-        title: Text('Режим: $_activeToolKey'),
+        title: Text('Режим: $_activeToolKey', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        foregroundColor: Colors.white, 
+        backgroundColor: Colors.transparent, 
+        elevation: 0, 
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+            child: Container(
+              color: Colors.black.withOpacity(0.4),
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_note, size: 28),
@@ -530,103 +543,113 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: <Widget>[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: Colors.amber.shade100,
-            child: Row(
-              children: [
-                const Text("Режим:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _getCurrentToolDisplayValue(),
-                      isExpanded: true,
-                      itemHeight: null, 
-                      items: _toolOptionsMap.keys.map((String russianDisplay) {
-                        return DropdownMenuItem<String>(
-                          value: russianDisplay,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                            child: Text(russianDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (String? selectedRussianDisplay) {
-                        if (selectedRussianDisplay != null) {
-                          setState(() {
-                            _activeToolKey = _toolOptionsMap[selectedRussianDisplay]!;
-                          });
-                        }
-                      },
+          // 1. DAS VOLLFLÄCHIGE BILD (Liegt im Hintergrund)
+          Positioned.fill(
+            child: Screenshot(
+              controller: _screenshotController,
+              child: FutureBuilder<Size>(
+                future: _getImageSize(widget.currentImage),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  }
+
+                  final imageSize = snapshot.data!;
+                  
+                  return Center(
+                    child: AspectRatio(
+                      aspectRatio: imageSize.width / imageSize.height,
+                      child: GestureDetector(
+                        onTapDown: (details) => _handleTouch(details.localPosition),
+                        onPanStart: (details) => _handlePan(details.localPosition, true),
+                        onPanUpdate: (details) => _handlePan(details.localPosition, false),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.file(
+                              widget.currentImage,
+                              fit: BoxFit.contain, 
+                            ),
+                            CustomPaint(
+                              painter: RedDimensionPainter(
+                                lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
+                                widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
+                                depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
+                                notePos1: _notePos1, noteLabel1: _noteText1,
+                                notePos2: _notePos2, noteLabel2: _noteText2,
+                                notePos3: _notePos3, noteLabel3: _noteText3,
+                                addressPos: _addressPos, addressLabel: _stampedAddress,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: _openDataInputScreen,
-                  icon: const Icon(Icons.list_alt, size: 16),
-                  label: const Text('Данные', style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
             ),
           ),
 
-          Expanded(
-            // ANPASSUNG: Padding unten wurde von 120.0 auf 60.0 reduziert (Bild ist jetzt ca. 60 Pixel länger unten).
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 60.0), 
-              child: ClipRRect(
-                borderRadius: BorderRadius.zero,
-                child: Screenshot(
-                  controller: _screenshotController,
-                  child: FutureBuilder<Size>(
-                    future: _getImageSize(widget.currentImage),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final imageSize = snapshot.data!;
-                      
-                      return Center(
-                        child: AspectRatio(
-                          aspectRatio: imageSize.width / imageSize.height,
-                          child: GestureDetector(
-                            onTapDown: (details) => _handleTouch(details.localPosition),
-                            onPanStart: (details) => _handlePan(details.localPosition, true),
-                            onPanUpdate: (details) => _handlePan(details.localPosition, false),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.file(
-                                  widget.currentImage,
-                                  fit: BoxFit.contain, 
+          // 2. DAS MATTE TRANSPARENTE SCHNELLWAHL-MENÜ
+          Positioned(
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 8, // Leicht abgerückt von der AppBar
+            left: 12, // ANPASSUNG: Minimaler Rand an den Seiten, damit es wie eine schwebende "Pille" wirkt
+            right: 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.0), // ANPASSUNG: Abgerundete Ecken
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                child: Container(
+                  // ANPASSUNG: vertical padding von 8 auf 4 verkleinert (macht das Menü in der Höhe schmaler)
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), 
+                  color: Colors.white.withOpacity(0.75), 
+                  child: Row(
+                    children: [
+                      const Text("Режим:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isDense: true, // ANPASSUNG: Reduziert die Bauhöhe des Dropdowns drastisch
+                            value: _getCurrentToolDisplayValue(),
+                            isExpanded: true,
+                            itemHeight: null, 
+                            dropdownColor: Colors.white, 
+                            items: _toolOptionsMap.keys.map((String russianDisplay) {
+                              return DropdownMenuItem<String>(
+                                value: russianDisplay,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                  child: Text(russianDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                                 ),
-                                CustomPaint(
-                                  painter: RedDimensionPainter(
-                                    lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "Länge: $_lengthText",
-                                    widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "Breite: $_widthText",
-                                    depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "Tiefe: $_depthText",
-                                    notePos1: _notePos1, noteLabel1: _noteText1,
-                                    notePos2: _notePos2, noteLabel2: _noteText2,
-                                    notePos3: _notePos3, noteLabel3: _noteText3,
-                                    addressPos: _addressPos, addressLabel: _stampedAddress,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            }).toList(),
+                            onChanged: (String? selectedRussianDisplay) {
+                              if (selectedRussianDisplay != null) {
+                                setState(() {
+                                  _activeToolKey = _toolOptionsMap[selectedRussianDisplay]!;
+                                });
+                              }
+                            },
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _openDataInputScreen,
+                        icon: const Icon(Icons.list_alt, size: 16),
+                        label: const Text('Данные', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          minimumSize: const Size(0, 32), // ANPASSUNG: Button etwas flacher gemacht
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1110,6 +1133,7 @@ class RedDimensionPainter extends CustomPainter {
       _drawArrowLineWithParallelLabel(canvas, depthStart!, depthEnd!, depthLabel, twoArrows: false, scale: scale);
     }
     
+    // Die normalen Textboxen (Notizen/Adresse) behalten ihr bisheriges, breiteres Design
     if (notePos1 != null && noteLabel1.isNotEmpty) {
       _drawTextBadge(canvas, notePos1!, noteLabel1, Colors.red, scale: scale);
     }
@@ -1168,8 +1192,8 @@ class RedDimensionPainter extends CustomPainter {
     );
     textPainter.layout();
 
-    final paddingH = 20.0 * scale; 
-    final paddingV = 12.0 * scale; 
+    final paddingH = 8.0 * scale; 
+    final paddingV = 4.0 * scale; 
 
     final badgeWidth = textPainter.width + (paddingH * 2);
     final badgeHeight = textPainter.height + (paddingV * 2);
