@@ -539,23 +539,28 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                 const Text("Режим:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: DropdownButton<String>(
-                    value: _getCurrentToolDisplayValue(),
-                    isDense: true,
-                    isExpanded: true,
-                    items: _toolOptionsMap.keys.map((String russianDisplay) {
-                      return DropdownMenuItem<String>(
-                        value: russianDisplay,
-                        child: Text(russianDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                      );
-                    }).toList(),
-                    onChanged: (String? selectedRussianDisplay) {
-                      if (selectedRussianDisplay != null) {
-                        setState(() {
-                          _activeToolKey = _toolOptionsMap[selectedRussianDisplay]!;
-                        });
-                      }
-                    },
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _getCurrentToolDisplayValue(),
+                      isExpanded: true,
+                      itemHeight: null, // Verhindert das Abschneiden bei mehrzeiligem Text
+                      items: _toolOptionsMap.keys.map((String russianDisplay) {
+                        return DropdownMenuItem<String>(
+                          value: russianDisplay,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0), // Mehr Luft für die Listeneinträge
+                            child: Text(russianDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? selectedRussianDisplay) {
+                        if (selectedRussianDisplay != null) {
+                          setState(() {
+                            _activeToolKey = _toolOptionsMap[selectedRussianDisplay]!;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -845,13 +850,16 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  isDense: true,
                   isExpanded: true,
+                  itemHeight: null, // Verhindert Abschneiden auf iOS
                   hint: const Text('Выберите поставщика...', style: TextStyle(fontSize: 16)),
                   items: _versorgerOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
+                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) => _appendToNote(val, _noteController1, _versorgerOptionsMap),
@@ -893,13 +901,16 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  isDense: true,
                   isExpanded: true,
+                  itemHeight: null, // Verhindert Abschneiden auf iOS
                   hint: const Text('Выберите материал...', style: TextStyle(fontSize: 16)),
                   items: _materialOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
+                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) => _appendToNote(val, _noteController2, _materialOptionsMap),
@@ -941,13 +952,16 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  isDense: true,
                   isExpanded: true,
+                  itemHeight: null, // Verhindert Abschneiden auf iOS
                   hint: const Text('Выберите деятельность...', style: TextStyle(fontSize: 16)),
                   items: _taetigkeitOptionsMap.keys.map((String russianLabel) {
                     return DropdownMenuItem<String>(
                       value: russianLabel,
-                      child: Text(russianLabel, style: const TextStyle(fontSize: 16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
+                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) => _appendToNote(val, _noteController3, _taetigkeitOptionsMap),
