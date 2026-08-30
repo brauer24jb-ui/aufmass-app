@@ -543,12 +543,12 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                     child: DropdownButton<String>(
                       value: _getCurrentToolDisplayValue(),
                       isExpanded: true,
-                      itemHeight: null, // Verhindert das Abschneiden bei mehrzeiligem Text
+                      itemHeight: null, 
                       items: _toolOptionsMap.keys.map((String russianDisplay) {
                         return DropdownMenuItem<String>(
                           value: russianDisplay,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0), // Mehr Luft für die Listeneinträge
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
                             child: Text(russianDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                           ),
                         );
@@ -851,18 +851,37 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
-                  itemHeight: null, // Verhindert Abschneiden auf iOS
+                  itemHeight: null,
                   hint: const Text('Выберите поставщика...', style: TextStyle(fontSize: 16)),
-                  items: _versorgerOptionsMap.keys.map((String russianLabel) {
-                    return DropdownMenuItem<String>(
-                      value: russianLabel,
+                  items: [
+                    // DER NEUE ZURÜCK-PFEIL
+                    const DropdownMenuItem<String>(
+                      value: 'BACK',
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
-                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_back, color: Colors.blue),
+                            SizedBox(width: 8),
+                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController1, _versorgerOptionsMap),
+                    ),
+                    ..._versorgerOptionsMap.keys.map((String russianLabel) {
+                      return DropdownMenuItem<String>(
+                        value: russianLabel,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0), 
+                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (val) {
+                    if (val == 'BACK' || val == null) return;
+                    _appendToNote(val, _noteController1, _versorgerOptionsMap);
+                  },
                 ),
               ),
             ),
@@ -902,18 +921,37 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
-                  itemHeight: null, // Verhindert Abschneiden auf iOS
+                  itemHeight: null,
                   hint: const Text('Выберите материал...', style: TextStyle(fontSize: 16)),
-                  items: _materialOptionsMap.keys.map((String russianLabel) {
-                    return DropdownMenuItem<String>(
-                      value: russianLabel,
+                  items: [
+                    // DER NEUE ZURÜCK-PFEIL
+                    const DropdownMenuItem<String>(
+                      value: 'BACK',
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
-                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_back, color: Colors.blue),
+                            SizedBox(width: 8),
+                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController2, _materialOptionsMap),
+                    ),
+                    ..._materialOptionsMap.keys.map((String russianLabel) {
+                      return DropdownMenuItem<String>(
+                        value: russianLabel,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (val) {
+                    if (val == 'BACK' || val == null) return;
+                    _appendToNote(val, _noteController2, _materialOptionsMap);
+                  },
                 ),
               ),
             ),
@@ -953,18 +991,37 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
-                  itemHeight: null, // Verhindert Abschneiden auf iOS
+                  itemHeight: null,
                   hint: const Text('Выберите деятельность...', style: TextStyle(fontSize: 16)),
-                  items: _taetigkeitOptionsMap.keys.map((String russianLabel) {
-                    return DropdownMenuItem<String>(
-                      value: russianLabel,
+                  items: [
+                    // DER NEUE ZURÜCK-PFEIL
+                    const DropdownMenuItem<String>(
+                      value: 'BACK',
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0), // Abstand für Zeilenumbruch
-                        child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_back, color: Colors.blue),
+                            SizedBox(width: 8),
+                            Text('Назад (Zurück)', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => _appendToNote(val, _noteController3, _taetigkeitOptionsMap),
+                    ),
+                    ..._taetigkeitOptionsMap.keys.map((String russianLabel) {
+                      return DropdownMenuItem<String>(
+                        value: russianLabel,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(russianLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (val) {
+                    if (val == 'BACK' || val == null) return;
+                    _appendToNote(val, _noteController3, _taetigkeitOptionsMap);
+                  },
                 ),
               ),
             ),
