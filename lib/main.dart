@@ -17,7 +17,7 @@ List<CameraDescription> cameras = [];
 // SPRACH-STEUERUNG UND ÜBERSETZUNGEN
 // ==========================================
 enum AppLang { ruDe, ukDe, ruUk, de }
-AppLang globalAppLang = AppLang.ruDe;
+AppLang globalAppLang = AppLang.ukDe;
 
 class Term {
   final String ru;
@@ -35,7 +35,25 @@ class Term {
     }
   }
 
-  String get value {
+  String get dropdownLabel {
+    switch (globalAppLang) {
+      case AppLang.ruDe: return '$ru  ➔  $de';
+      case AppLang.ukDe: return '$uk  ➔  $de';
+      case AppLang.ruUk: return '$ru  ➔  $uk';
+      case AppLang.de: return de;
+    }
+  }
+
+  String get sourceLang {
+    switch (globalAppLang) {
+      case AppLang.ruDe: return ru;
+      case AppLang.ukDe: return uk;
+      case AppLang.ruUk: return ru;
+      case AppLang.de: return de;
+    }
+  }
+
+  String get outputLang {
     switch (globalAppLang) {
       case AppLang.ruDe: return de;
       case AppLang.ukDe: return de;
@@ -43,6 +61,8 @@ class Term {
       case AppLang.de: return de;
     }
   }
+
+  String get value => outputLang;
 }
 
 // Werkzeuge / Menüs
@@ -99,7 +119,7 @@ final List<Term> taetigkeitTerms = [
 
 final Term backTerm = const Term(ru: 'Назад', uk: 'Назад', de: 'Zurück');
 
-// Übersetzungen der restlichen UI
+// Übersetzungen der UI
 String get uiStartTitle {
   if (globalAppLang == AppLang.ukDe) return 'Заміри на будівництві';
   if (globalAppLang == AppLang.de) return 'Aufmaß Baustelle';
@@ -150,6 +170,18 @@ String get uiAddress {
   if (globalAppLang == AppLang.de) return 'Adresse / Objekt';
   return 'Адрес / Объект';
 }
+String get uiSaveToPhotos {
+  if (globalAppLang == AppLang.ukDe) return 'Зберегти в фото';
+  if (globalAppLang == AppLang.ruUk) return 'Сохранить в фото';
+  if (globalAppLang == AppLang.de) return 'In Fotos speichern';
+  return 'Сохранить в фото';
+}
+String get uiSavedSuccess {
+  if (globalAppLang == AppLang.ukDe) return 'Збережено в фото!';
+  if (globalAppLang == AppLang.ruUk) return 'Сохранено в фото!';
+  if (globalAppLang == AppLang.de) return 'In Fotos gespeichert!';
+  return 'Сохранено в фото!';
+}
 
 String get uiNote1 {
   if (globalAppLang == AppLang.ukDe) return '1. Примітка (1. Versorger)';
@@ -183,14 +215,14 @@ String get uiSelect2 {
 }
 String get uiSelect3 {
   if (globalAppLang == AppLang.ukDe) return '3. Вибір діяльності (3. Auswahl Tätigkeit)';
-  if (globalAppLang == AppLang.ruUk) return '3. Выбор деятельности (3. Діяльність)';
+  if (globalAppLang == AppLang.ruUk) return '3. Выбор діяльності (3. Діяльність)';
   if (globalAppLang == AppLang.de) return '3. Auswahl (Tätigkeit)';
   return '3. Выбор деятельности (3. Auswahl Tätigkeit)';
 }
 String get uiHint1 {
   if (globalAppLang == AppLang.ukDe) return 'Виберіть постачальника...';
   if (globalAppLang == AppLang.de) return 'Versorger wählen...';
-  return 'Выберите поставщика...';
+  return 'Выберите постачальника...';
 }
 String get uiHint2 {
   if (globalAppLang == AppLang.ukDe) return 'Виберіть матеріал...';
@@ -275,16 +307,27 @@ class _StartScreenState extends State<StartScreen> {
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
+      DateTime now = DateTime.now();
+      String timeStr = "${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} Uhr";
+      
+      String coordStr = "${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}";
+
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
 
-      if (placemarks.isNotEmpty && mounted) {
-        Placemark place = placemarks[0];
-        setState(() {
-          _locationMessage = "${place.street ?? ''}, ${place.postalCode ?? ''} ${place.locality ?? ''}";
-        });
+      if (mounted) {
+        if (placemarks.isNotEmpty) {
+          Placemark place = placemarks[0];
+          setState(() {
+            _locationMessage = "${place.street ?? ''}, ${place.postalCode ?? ''} ${place.locality ?? ''}\n$coordStr\n$timeStr";
+          });
+        } else {
+          setState(() {
+            _locationMessage = "Unbekannter Ort\n$coordStr\n$timeStr";
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -380,7 +423,7 @@ class _StartScreenState extends State<StartScreen> {
               Text(
                 _locationMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey, height: 1.4),
               ),
               const SizedBox(height: 12),
               
@@ -430,7 +473,7 @@ class _StartScreenState extends State<StartScreen> {
 }
 
 // ==========================================
-// SEITE 1.5: Eigene Live-Kamera 
+// SEITE 1.5: Eigene Live-Kamera MIT ZOOM-DREHRAD
 // ==========================================
 class CustomCameraScreen extends StatefulWidget {
   final String defaultAddress;
@@ -445,19 +488,41 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   late Future<void> _initializeControllerFuture;
   bool _isTakingPicture = false;
 
+  final List<double> _availableZoomLevels = [
+    0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
+    1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 
+    2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 
+    3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0
+  ];
+  
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
+
+  int _selectedZoomIndex = 9; 
+  late FixedExtentScrollController _zoomScrollController;
+
   @override
   void initState() {
     super.initState();
+    _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
+    
     _controller = CameraController(
       cameras.first,
       ResolutionPreset.veryHigh,
       enableAudio: false,
     );
-    _initializeControllerFuture = _controller.initialize();
+    _initializeControllerFuture = _controller.initialize().then((_) async {
+      _maxAvailableZoom = await _controller.getMaxZoomLevel();
+      _minAvailableZoom = await _controller.getMinZoomLevel();
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _zoomScrollController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -507,8 +572,136 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               return Stack(
                 children: [
                   Positioned.fill(
-                    child: CameraPreview(_controller),
+                    child: GestureDetector(
+                      onScaleStart: (details) {
+                        _baseZoomLevel = _currentZoomLevel;
+                      },
+                      onScaleUpdate: (details) async {
+                        double zoom = _baseZoomLevel * details.scale;
+                        zoom = zoom.clamp(_minAvailableZoom, _maxAvailableZoom);
+                        
+                        if (zoom != _currentZoomLevel) {
+                          setState(() {
+                            _currentZoomLevel = zoom;
+                          });
+                          await _controller.setZoomLevel(zoom);
+
+                          int closestIndex = 0;
+                          double minDiff = double.infinity;
+                          for(int i = 0; i < _availableZoomLevels.length; i++) {
+                            double diff = (zoom - _availableZoomLevels[i]).abs();
+                            if(diff < minDiff) {
+                              minDiff = diff;
+                              closestIndex = i;
+                            }
+                          }
+                          
+                          if (_selectedZoomIndex != closestIndex) {
+                            setState(() {
+                              _selectedZoomIndex = closestIndex;
+                            });
+                            _zoomScrollController.jumpToItem(closestIndex);
+                          }
+                        }
+                      },
+                      child: CameraPreview(_controller),
+                    ),
                   ),
+
+                  Positioned(
+                    bottom: 130, 
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 50, 
+                      child: RotatedBox(
+                        quarterTurns: -1, 
+                        child: ListWheelScrollView.useDelegate(
+                          controller: _zoomScrollController,
+                          itemExtent: 40, 
+                          physics: const FixedExtentScrollPhysics(), 
+                          perspective: 0.003, 
+                          diameterRatio: 1.5,
+                          onSelectedItemChanged: (index) async {
+                            setState(() {
+                              _selectedZoomIndex = index;
+                            });
+                            double zoomValue = _availableZoomLevels[index];
+                            double targetZoom = zoomValue.clamp(_minAvailableZoom, _maxAvailableZoom);
+                            setState(() {
+                              _currentZoomLevel = targetZoom;
+                            });
+                            await _controller.setZoomLevel(targetZoom);
+                          },
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: _availableZoomLevels.length,
+                            builder: (context, index) {
+                              double zoomValue = _availableZoomLevels[index];
+                              bool isSelected = index == _selectedZoomIndex;
+                              
+                              bool isMainLabel = zoomValue == 0.5 || 
+                                                 zoomValue == 1.0 || 
+                                                 zoomValue == 2.0 || 
+                                                 zoomValue == 3.0 || 
+                                                 zoomValue > 3.0; 
+
+                              Widget content;
+                              
+                              if (isSelected) {
+                                content = AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 40,
+                                  height: 40,
+                                  alignment: Alignment.center,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.red,
+                                  ),
+                                  child: Text(
+                                    '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                );
+                              } else if (isMainLabel) {
+                                content = Text(
+                                  '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    shadows: [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 1))]
+                                  ),
+                                );
+                              } else {
+                                content = Container(
+                                  width: 2,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white70,
+                                    borderRadius: BorderRadius.circular(1),
+                                    boxShadow: const [BoxShadow(color: Colors.black87, blurRadius: 2, offset: Offset(0, 1))]
+                                  ),
+                                );
+                              }
+
+                              return RotatedBox(
+                                quarterTurns: 1, 
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  child: content,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
@@ -530,6 +723,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                       ),
                     ),
                   ),
+                  
                   Positioned(
                     top: 10,
                     left: 10,
@@ -596,7 +790,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
   @override
   void initState() {
     super.initState();
-    // Erstellt die Auswahlliste dynamisch anhand der gewählten Sprache
     _toolOptionsMap = {};
     toolTerms.forEach((key, term) {
       _toolOptionsMap[term.display] = key;
@@ -625,8 +818,8 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Gespeichert in "Aufmass JB"!'),
+            SnackBar(
+              content: Text(uiSavedSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -748,17 +941,27 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
             icon: const Icon(Icons.edit_note, size: 28),
             onPressed: _openDataInputScreen,
           ),
-          IconButton(
-            icon: _isSaving 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.save_alt),
-            onPressed: _isSaving ? null : () => _saveToGallery(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              onPressed: _isSaving ? null : () => _saveToGallery(context),
+              child: _isSaving 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(uiSaveToPhotos, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
           ),
         ],
       ),
       body: Stack(
         children: <Widget>[
-          // VOLLFLÄCHIGES BILD
           Positioned.fill(
             child: Screenshot(
               controller: _screenshotController,
@@ -787,9 +990,9 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                             ),
                             CustomPaint(
                               painter: RedDimensionPainter(
-                                lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "${toolTerms['Länge']!.value}: $_lengthText",
-                                widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "${toolTerms['Breite']!.value}: $_widthText",
-                                depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "${toolTerms['Tiefe']!.value}: $_depthText",
+                                lengthStart: _lengthStart, lengthEnd: _lengthEnd, lengthLabel: "${toolTerms['Länge']!.outputLang}: $_lengthText",
+                                widthStart: _widthStart, widthEnd: _widthEnd, widthLabel: "${toolTerms['Breite']!.outputLang}: $_widthText",
+                                depthStart: _depthStart, depthEnd: _depthEnd, depthLabel: "${toolTerms['Tiefe']!.outputLang}: $_depthText",
                                 notePos1: _notePos1, noteLabel1: _noteText1,
                                 notePos2: _notePos2, noteLabel2: _noteText2,
                                 notePos3: _notePos3, noteLabel3: _noteText3,
@@ -806,7 +1009,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
             ),
           ),
 
-          // SCHWEBENDES MENÜ
           Positioned(
             top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
             left: 12, 
@@ -820,7 +1022,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                   color: Colors.white.withOpacity(0.75), 
                   child: Row(
                     children: [
-                      // Schriftgröße auf 12 reduziert für das iPhone
                       Text(uiMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
                       const SizedBox(width: 8),
                       Expanded(
@@ -837,7 +1038,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                     displayLabel,
-                                    // Schriftgröße auf 12 reduziert
                                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -847,7 +1047,6 @@ class _EditPhotoScreenState extends State<EditPhotoScreen> {
                             items: _toolOptionsMap.keys.map((String displayLabel) {
                               return DropdownMenuItem<String>(
                                 value: displayLabel,
-                                // Schriftgröße auf 12 reduziert
                                 child: Text(displayLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                               );
                             }).toList(),
@@ -943,9 +1142,10 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _noteController3 = TextEditingController(text: widget.note3);
     _addressController = TextEditingController(text: widget.address);
 
-    _versorgerOptionsMap = { for (var t in versorgerTerms) t.display : t.value };
-    _materialOptionsMap = { for (var t in materialTerms) t.display : t.value };
-    _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.display : t.value };
+    // WICHTIG: Das Dropdown (z.B. "Вода -> Wasser") fügt wieder direkt das deutsche Wort ("Wasser") in das Feld ein!
+    _versorgerOptionsMap = { for (var t in versorgerTerms) t.dropdownLabel : t.outputLang };
+    _materialOptionsMap = { for (var t in materialTerms) t.dropdownLabel : t.outputLang };
+    _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.dropdownLabel : t.outputLang };
   }
 
   @override
@@ -960,6 +1160,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
     super.dispose();
   }
 
+  // ==========================================
+  // BLITZSCHNELLES SPEICHERN OHNE LADEZEIT (OHNE KI)
+  // ==========================================
   void _saveAndReturn() {
     Navigator.pop(context, {
       'length': _lengthController.text,
@@ -990,7 +1193,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
     return Scaffold(
       backgroundColor: Colors.lightBlue.shade50,
       appBar: AppBar(
-        title: Text(uiInputTitle, style: const TextStyle(fontSize: 16)), // leicht verkleinert
+        title: Text(uiInputTitle, style: const TextStyle(fontSize: 16)), 
         actions: [
           IconButton(
             icon: const Icon(Icons.check, size: 26),
@@ -1010,7 +1213,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1021,7 +1224,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1032,7 +1235,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const Divider(height: 32, thickness: 2),
 
@@ -1043,7 +1246,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController1,
               decoration: InputDecoration(
                 labelText: uiNote1,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1054,13 +1257,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController1.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect1,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1071,7 +1274,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint1, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
+                  hint: Text(uiHint1, style: const TextStyle(fontSize: 14)), 
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1088,7 +1291,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), 
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1111,7 +1314,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController2,
               decoration: InputDecoration(
                 labelText: uiNote2,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1122,13 +1325,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController2.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect2,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1139,7 +1342,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint2, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
+                  hint: Text(uiHint2, style: const TextStyle(fontSize: 14)), 
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1156,7 +1359,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), 
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1179,7 +1382,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               controller: _noteController3,
               decoration: InputDecoration(
                 labelText: uiNote3,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1190,13 +1393,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _noteController3.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
                 labelText: uiSelect3,
-                labelStyle: const TextStyle(fontSize: 13), // Label leicht verkleinert
+                labelStyle: const TextStyle(fontSize: 13), 
                 isDense: true,
                 border: const OutlineInputBorder(),
                 filled: true,
@@ -1207,7 +1410,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   itemHeight: 80.0,
-                  hint: Text(uiHint3, style: const TextStyle(fontSize: 14)), // Schrift auf 14 verkleinert
+                  hint: Text(uiHint3, style: const TextStyle(fontSize: 14)), 
                   items: [
                     DropdownMenuItem<String>(
                       value: 'BACK',
@@ -1224,7 +1427,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                         value: displayLabel,
                         child: Text(
                           displayLabel, 
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Schrift auf 14 verkleinert
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), 
                           softWrap: true,
                           maxLines: 3,
                         ),
@@ -1242,6 +1445,8 @@ class _DataInputScreenState extends State<DataInputScreen> {
 
             TextField(
               controller: _addressController,
+              maxLines: null, 
+              keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
                 labelText: uiAddress,
                 border: const OutlineInputBorder(),
@@ -1252,7 +1457,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
                   onPressed: () => _addressController.clear(),
                 ),
               ),
-              style: const TextStyle(fontSize: 14), // Schrift auf 14 verkleinert
+              style: const TextStyle(fontSize: 14), 
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -1260,7 +1465,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
               child: ElevatedButton.icon(
                 onPressed: _saveAndReturn,
                 icon: const Icon(Icons.check, size: 20),
-                label: Text(uiAcceptReturn, style: const TextStyle(fontSize: 15)), // Button Schrift leicht verkleinert
+                label: Text(uiAcceptReturn, style: const TextStyle(fontSize: 15)), 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -1435,7 +1640,7 @@ class RedDimensionPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: textSpan,
       textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
+      textAlign: TextAlign.center, 
     );
     textPainter.layout();
 
