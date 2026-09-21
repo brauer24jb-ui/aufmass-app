@@ -144,6 +144,7 @@ final List<Term> taetigkeitTerms = [
 
 // ==========================================
 // 4. MAXIMAL ERWEITERTES MEGA-WÖRTERBUCH (UNSICHTBAR IM UI)
+// INKLUSIVE ALLTAGSWÖRTER
 // ==========================================
 final List<Term> megaDictionaryTerms = [
   // --- VERMESSUNG & HIGHTECH ---
@@ -158,7 +159,6 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Разметка', uk: 'Розмітка', de: 'Absteckung'),
   const Term(ru: 'Нивелир', uk: 'Нівелір', de: 'Nivelliergerät'),
   const Term(ru: 'Лазер', uk: 'Лазер', de: 'Baulaser'),
-  const Term(ru: 'Метр', uk: 'Метр', de: 'Zollstock'),
   const Term(ru: 'Рулетка', uk: 'Рулетка', de: 'Maßband'),
   const Term(ru: 'Смета', uk: 'Кошторис', de: 'Kostenvoranschlag'),
   const Term(ru: 'Замер', uk: 'Замір', de: 'Aufmaß'),
@@ -321,7 +321,7 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Полив', uk: 'Полив', de: 'Bewässerung'),
   const Term(ru: 'Семена', uk: 'Насіння', de: 'Saatgut'),
   
-  // --- VERBEN / TÄTIGKEITEN (Konjugiert & Infinitiv) ---
+  // --- VERBEN / TÄTIGKEITEN (Baustelle) ---
   const Term(ru: 'Асфальтировали', uk: 'Асфальтували', de: 'asphaltiert'),
   const Term(ru: 'Заасфальтировали', uk: 'Заасфальтували', de: 'asphaltiert'),
   const Term(ru: 'Равняли', uk: 'Рівняли', de: 'planiert'),
@@ -329,7 +329,7 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Спланировали', uk: 'Спланували', de: 'planiert'),
   const Term(ru: 'Копали', uk: 'Копали', de: 'ausgehoben'),
   const Term(ru: 'Выкопали', uk: 'Викопали', de: 'ausgehoben'),
-  const Term(ru: 'Аускофферн', uk: 'Вийняти ґрунт', de: 'ausgekoffert'), // Spezieller Baubegriff
+  const Term(ru: 'Аускофферн', uk: 'Вийняти ґрунт', de: 'ausgekoffert'), 
   const Term(ru: 'Копать', uk: 'Копати', de: 'baggern / graben'),
   const Term(ru: 'Засыпали', uk: 'Засипали', de: 'verfüllt'),
   const Term(ru: 'Засыпать', uk: 'Засипати', de: 'verfüllen'),
@@ -370,29 +370,51 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Полили', uk: 'Полили', de: 'gegossen'),
   const Term(ru: 'Привезли', uk: 'Привезли', de: 'geliefert'),
   const Term(ru: 'Увезли', uk: 'Повезли', de: 'abtransportiert'),
+
+  // ==========================================
+  // NEU: ALLTAGS- UND BASISWORTSCHATZ
+  // ==========================================
   
-  // --- ZUSTÄNDE, ADJEKTIVE & MAßE ---
+  // --- VERBEN (Allgemein) ---
+  const Term(ru: 'Делать', uk: 'Робити', de: 'machen'),
+  const Term(ru: 'Сделали', uk: 'Зробили', de: 'gemacht'),
+  const Term(ru: 'Работать', uk: 'Працювати', de: 'arbeiten'),
+  const Term(ru: 'Работали', uk: 'Працювали', de: 'gearbeitet'),
+  const Term(ru: 'Помогать', uk: 'Допомагати', de: 'helfen'),
+  const Term(ru: 'Брать', uk: 'Брати', de: 'nehmen'),
+  const Term(ru: 'Взяли', uk: 'Взяли', de: 'genommen'),
+  const Term(ru: 'Давать', uk: 'Давати', de: 'geben'),
+  const Term(ru: 'Дали', uk: 'Дали', de: 'gegeben'),
+  const Term(ru: 'Нужно', uk: 'Потрібно', de: 'brauchen / benötigt'),
+  const Term(ru: 'Искать', uk: 'Шукати', de: 'suchen'),
+  const Term(ru: 'Нашли', uk: 'Знайшли', de: 'gefunden'),
+  const Term(ru: 'Смотреть', uk: 'Дивитися', de: 'schauen'),
+  const Term(ru: 'Видеть', uk: 'Бачити', de: 'sehen'),
+  const Term(ru: 'Идти', uk: 'Йти', de: 'gehen'),
+  const Term(ru: 'Пришли', uk: 'Прийшли', de: 'gekommen'),
+  
+  // --- ZUSTÄNDE, ADJEKTIVE & EIGENSCHAFTEN ---
   const Term(ru: 'Сломан', uk: 'Зламаний', de: 'defekt'),
   const Term(ru: 'Сломана', uk: 'Зламана', de: 'defekt'),
   const Term(ru: 'Сломано', uk: 'Зламано', de: 'defekt'),
   const Term(ru: 'Порван', uk: 'Порваний', de: 'gerissen'),
-  const Term(ru: 'Трещина', uk: 'Тріщина', de: 'Riss'),
   const Term(ru: 'Новый', uk: 'Новий', de: 'neu'),
   const Term(ru: 'Новая', uk: 'Нова', de: 'neu'),
   const Term(ru: 'Старый', uk: 'Старий', de: 'alt'),
   const Term(ru: 'Старая', uk: 'Стара', de: 'alt'),
+  const Term(ru: 'Хорошо', uk: 'Добре', de: 'gut'),
+  const Term(ru: 'Плохо', uk: 'Погано', de: 'schlecht'),
+  const Term(ru: 'Быстро', uk: 'Швидко', de: 'schnell'),
+  const Term(ru: 'Медленно', uk: 'Повільно', de: 'langsam'),
+  const Term(ru: 'Большой', uk: 'Великий', de: 'groß'),
+  const Term(ru: 'Маленький', uk: 'Маленький', de: 'klein'),
   const Term(ru: 'Глубоко', uk: 'Глибоко', de: 'tief'),
-  const Term(ru: 'Мелко', uk: 'Дрібно / Мілко', de: 'flach'),
+  const Term(ru: 'Мелко', uk: 'Мілко', de: 'flach'),
   const Term(ru: 'Широко', uk: 'Широко', de: 'breit'),
   const Term(ru: 'Узко', uk: 'Вузько', de: 'schmal'),
   const Term(ru: 'Длинно', uk: 'Довго', de: 'lang'),
   const Term(ru: 'Коротко', uk: 'Коротко', de: 'kurz'),
   const Term(ru: 'Высоко', uk: 'Високо', de: 'hoch'),
-  const Term(ru: 'Уклон', uk: 'Ухил', de: 'Gefälle'),
-  const Term(ru: 'Шов', uk: 'Шов', de: 'Fuge'),
-  const Term(ru: 'Стык', uk: 'Стик', de: 'Stoß'),
-  const Term(ru: 'Край', uk: 'Край', de: 'Kante / Rand'),
-  const Term(ru: 'Угол', uk: 'Кут', de: 'Ecke / Winkel'),
   const Term(ru: 'Прямо', uk: 'Прямо', de: 'gerade'),
   const Term(ru: 'Криво', uk: 'Криво', de: 'schief'),
   const Term(ru: 'Точно', uk: 'Точно', de: 'exakt'),
@@ -409,6 +431,62 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Полный', uk: 'Повний', de: 'voll'),
   const Term(ru: 'Открыто', uk: 'Відкрито', de: 'offen'),
   const Term(ru: 'Закрыто', uk: 'Закрито', de: 'geschlossen'),
+  
+  // --- RICHTUNGEN & ORTE ---
+  const Term(ru: 'Вверх', uk: 'Вгору', de: 'oben'),
+  const Term(ru: 'Вниз', uk: 'Вниз', de: 'unten'),
+  const Term(ru: 'Налево', uk: 'Наліво', de: 'links'),
+  const Term(ru: 'Направо', uk: 'Направо', de: 'rechts'),
+  const Term(ru: 'Вперед', uk: 'Вперед', de: 'vorne'),
+  const Term(ru: 'Назад', uk: 'Назад', de: 'hinten'),
+  const Term(ru: 'Здесь', uk: 'Тут', de: 'hier'),
+  const Term(ru: 'Там', uk: 'Там', de: 'dort'),
+  const Term(ru: 'Внутри', uk: 'Всередині', de: 'innen'),
+  const Term(ru: 'Снаружи', uk: 'Зовні', de: 'außen'),
+  
+  // --- ZEIT & WETTER ---
+  const Term(ru: 'Сегодня', uk: 'Сьогодні', de: 'heute'),
+  const Term(ru: 'Завтра', uk: 'Завтра', de: 'morgen'),
+  const Term(ru: 'Вчера', uk: 'Вчора', de: 'gestern'),
+  const Term(ru: 'Утром', uk: 'Вранці', de: 'morgens / früh'),
+  const Term(ru: 'Вечером', uk: 'Увечері', de: 'abends / spät'),
+  const Term(ru: 'Понедельник', uk: 'Понеділок', de: 'Montag'),
+  const Term(ru: 'Вторник', uk: 'Вівторок', de: 'Dienstag'),
+  const Term(ru: 'Среда', uk: 'Середа', de: 'Mittwoch'),
+  const Term(ru: 'Четверг', uk: 'Четвер', de: 'Donnerstag'),
+  const Term(ru: 'Пятница', uk: 'П\'ятниця', de: 'Freitag'),
+  const Term(ru: 'Суббота', uk: 'Субота', de: 'Samstag'),
+  const Term(ru: 'Воскресенье', uk: 'Неділя', de: 'Sonntag'),
+  const Term(ru: 'Погода', uk: 'Погода', de: 'Wetter'),
+  const Term(ru: 'Дождь', uk: 'Дощ', de: 'Regen'),
+  const Term(ru: 'Снег', uk: 'Сніг', de: 'Schnee'),
+  const Term(ru: 'Солнце', uk: 'Сонце', de: 'Sonne'),
+  const Term(ru: 'Ветер', uk: 'Вітер', de: 'Wind'),
+  const Term(ru: 'Тепло', uk: 'Тепло', de: 'warm'),
+  const Term(ru: 'Холодно', uk: 'Холодно', de: 'kalt'),
+  
+  // --- FARBEN ---
+  const Term(ru: 'Красный', uk: 'Червоний', de: 'rot'),
+  const Term(ru: 'Синий', uk: 'Синій', de: 'blau'),
+  const Term(ru: 'Зеленый', uk: 'Зелений', de: 'grün'),
+  const Term(ru: 'Желтый', uk: 'Жовтий', de: 'gelb'),
+  const Term(ru: 'Черный', uk: 'Чорний', de: 'schwarz'),
+  const Term(ru: 'Белый', uk: 'Білий', de: 'weiß'),
+  const Term(ru: 'Серый', uk: 'Сірий', de: 'grau'),
+  const Term(ru: 'Коричневый', uk: 'Коричневий', de: 'braun'),
+  const Term(ru: 'Оранжевый', uk: 'Помаранчевий', de: 'orange'),
+
+  // --- MENGEN & ZAHLEN ---
+  const Term(ru: 'Один', uk: 'Один', de: 'eins'),
+  const Term(ru: 'Два', uk: 'Два', de: 'zwei'),
+  const Term(ru: 'Три', uk: 'Три', de: 'drei'),
+  const Term(ru: 'Десять', uk: 'Десять', de: 'zehn'),
+  const Term(ru: 'Много', uk: 'Багато', de: 'viel'),
+  const Term(ru: 'Мало', uk: 'Мало', de: 'wenig'),
+  const Term(ru: 'Больше', uk: 'Більше', de: 'mehr'),
+  const Term(ru: 'Меньше', uk: 'Менше', de: 'weniger'),
+  const Term(ru: 'Всё', uk: 'Все', de: 'alles'),
+  const Term(ru: 'Ничего', uk: 'Нічого', de: 'nichts'),
   
   // --- EINHEITEN & ABKÜRZUNGEN ---
   const Term(ru: 'Квадратный метр', uk: 'Квадратний метр', de: 'Quadratmeter'),
