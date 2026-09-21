@@ -310,7 +310,7 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Демонтировали', uk: 'Демонтували', de: 'demontiert'),
   const Term(ru: 'Сняли', uk: 'Зняли', de: 'ausgebaut / entfernt'),
   const Term(ru: 'Убрали', uk: 'Прибрали', de: 'weggeräumt'),
-  const রঙের', uk: 'Фарбували', de: 'gestrichen'),
+  const Term(ru: 'Покрасили', uk: 'Фарбували', de: 'gestrichen'), // DIE REPARIERTE ZEILE
   const Term(ru: 'Починили', uk: 'Полагодили', de: 'repariert'),
   const Term(ru: 'Отремонтировали', uk: 'Відремонтували', de: 'repariert'),
   const Term(ru: 'Проверили', uk: 'Перевірили', de: 'geprüft'),
