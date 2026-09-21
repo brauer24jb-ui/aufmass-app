@@ -473,7 +473,7 @@ class _StartScreenState extends State<StartScreen> {
 }
 
 // ==========================================
-// SEITE 1.5: Eigene Live-Kamera MIT ZOOM-DREHRAD
+// SEITE 1.5: Eigene Live-Kamera MIT LINSENWECHSEL
 // ==========================================
 class CustomCameraScreen extends StatefulWidget {
   final String defaultAddress;
@@ -484,9 +484,11 @@ class CustomCameraScreen extends StatefulWidget {
 }
 
 class _CustomCameraScreenState extends State<CustomCameraScreen> {
-  late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
+  CameraController? _controller;
+  Future<void>? _initializeControllerFuture;
   bool _isTakingPicture = false;
+  
+  int _currentCameraIndex = 0;
 
   final List<double> _availableZoomLevels = [
     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
@@ -508,27 +510,79 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     super.initState();
     _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
     
+    for (int i = 0; i < cameras.length; i++) {
+      if (cameras[i].lensDirection == CameraLensDirection.back) {
+        _currentCameraIndex = i;
+        break;
+      }
+    }
+    
+    _initCamera(_currentCameraIndex);
+  }
+
+  Future<void> _initCamera(int cameraIndex) async {
+    if (_controller != null) {
+      await _controller!.dispose();
+    }
+
     _controller = CameraController(
-      cameras.first,
+      cameras[cameraIndex],
       ResolutionPreset.veryHigh,
       enableAudio: false,
     );
-    _initializeControllerFuture = _controller.initialize().then((_) async {
-      _maxAvailableZoom = await _controller.getMaxZoomLevel();
-      _minAvailableZoom = await _controller.getMinZoomLevel();
-      if (mounted) setState(() {});
+
+    _initializeControllerFuture = _controller!.initialize().then((_) async {
+      if (!mounted) return;
+      _maxAvailableZoom = await _controller!.getMaxZoomLevel();
+      _minAvailableZoom = await _controller!.getMinZoomLevel();
+      
+      setState(() {
+        _currentZoomLevel = _minAvailableZoom < 1.0 ? 1.0 : _minAvailableZoom;
+        
+        int closestIndex = 0;
+        double minDiff = double.infinity;
+        for(int i = 0; i < _availableZoomLevels.length; i++) {
+          double diff = (_currentZoomLevel - _availableZoomLevels[i]).abs();
+          if(diff < minDiff) {
+            minDiff = diff;
+            closestIndex = i;
+          }
+        }
+        _selectedZoomIndex = closestIndex;
+        _zoomScrollController.jumpToItem(closestIndex);
+      });
     });
+
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _toggleCameraLens() async {
+    List<int> backCameras = [];
+    for (int i = 0; i < cameras.length; i++) {
+      if (cameras[i].lensDirection == CameraLensDirection.back) {
+        backCameras.add(i);
+      }
+    }
+
+    if (backCameras.length > 1) {
+      int currentIndex = backCameras.indexOf(_currentCameraIndex);
+      int nextIndex = (currentIndex + 1) % backCameras.length;
+      await _initCamera(backCameras[nextIndex]);
+    } else {
+      int nextIndex = (_currentCameraIndex + 1) % cameras.length;
+      await _initCamera(nextIndex);
+    }
   }
 
   @override
   void dispose() {
     _zoomScrollController.dispose();
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   Future<void> _takePictureAndGo() async {
-    if (_isTakingPicture) return;
+    if (_isTakingPicture || _controller == null) return;
 
     try {
       setState(() {
@@ -536,7 +590,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       });
       await _initializeControllerFuture;
       
-      final image = await _controller.takePicture();
+      final image = await _controller!.takePicture();
       
       if (!mounted) return;
 
@@ -568,7 +622,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
         child: FutureBuilder<void>(
           future: _initializeControllerFuture,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.connectionState == ConnectionState.done && _controller != null) {
               return Stack(
                 children: [
                   Positioned.fill(
@@ -584,7 +638,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                           setState(() {
                             _currentZoomLevel = zoom;
                           });
-                          await _controller.setZoomLevel(zoom);
+                          await _controller!.setZoomLevel(zoom);
 
                           int closestIndex = 0;
                           double minDiff = double.infinity;
@@ -604,98 +658,122 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                           }
                         }
                       },
-                      child: CameraPreview(_controller),
+                      child: CameraPreview(_controller!),
                     ),
                   ),
 
+                  // ==========================
+                  // DIE FEINE ZOOM-LEISTE 
+                  // ==========================
                   Positioned(
-                    bottom: 130, 
+                    bottom: 120, // Etwas angepasst
                     left: 0,
                     right: 0,
-                    child: SizedBox(
-                      height: 50, 
-                      child: RotatedBox(
-                        quarterTurns: -1, 
-                        child: ListWheelScrollView.useDelegate(
-                          controller: _zoomScrollController,
-                          itemExtent: 40, 
-                          physics: const FixedExtentScrollPhysics(), 
-                          perspective: 0.003, 
-                          diameterRatio: 1.5,
-                          onSelectedItemChanged: (index) async {
-                            setState(() {
-                              _selectedZoomIndex = index;
-                            });
-                            double zoomValue = _availableZoomLevels[index];
-                            double targetZoom = zoomValue.clamp(_minAvailableZoom, _maxAvailableZoom);
-                            setState(() {
-                              _currentZoomLevel = targetZoom;
-                            });
-                            await _controller.setZoomLevel(targetZoom);
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: _availableZoomLevels.length,
-                            builder: (context, index) {
+                    child: ShaderMask(
+                      // Dies erzeugt den Ausblend-Effekt an den Rändern (sehr Apple-like)
+                      shaderCallback: (Rect bounds) {
+                        return const LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: <Color>[
+                            Colors.transparent,
+                            Colors.white,
+                            Colors.white,
+                            Colors.transparent
+                          ],
+                          stops: [0.0, 0.35, 0.65, 1.0], 
+                        ).createShader(bounds);
+                      },
+                      blendMode: BlendMode.dstIn,
+                      child: SizedBox(
+                        height: 60, 
+                        child: RotatedBox(
+                          quarterTurns: -1, 
+                          child: ListWheelScrollView.useDelegate(
+                            controller: _zoomScrollController,
+                            itemExtent: 26, // Dichter zusammen (feiner)
+                            physics: const FixedExtentScrollPhysics(), 
+                            perspective: 0.0015, // Flacheres, eleganteres Rad
+                            diameterRatio: 2.5, // Größerer virtueller Radius
+                            onSelectedItemChanged: (index) async {
+                              setState(() {
+                                _selectedZoomIndex = index;
+                              });
                               double zoomValue = _availableZoomLevels[index];
-                              bool isSelected = index == _selectedZoomIndex;
-                              
-                              bool isMainLabel = zoomValue == 0.5 || 
-                                                 zoomValue == 1.0 || 
-                                                 zoomValue == 2.0 || 
-                                                 zoomValue == 3.0 || 
-                                                 zoomValue > 3.0; 
-
-                              Widget content;
-                              
-                              if (isSelected) {
-                                content = AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 40,
-                                  height: 40,
-                                  alignment: Alignment.center,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.red,
-                                  ),
-                                  child: Text(
-                                    '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                );
-                              } else if (isMainLabel) {
-                                content = Text(
-                                  '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    shadows: [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 1))]
-                                  ),
-                                );
-                              } else {
-                                content = Container(
-                                  width: 2,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white70,
-                                    borderRadius: BorderRadius.circular(1),
-                                    boxShadow: const [BoxShadow(color: Colors.black87, blurRadius: 2, offset: Offset(0, 1))]
-                                  ),
-                                );
-                              }
-
-                              return RotatedBox(
-                                quarterTurns: 1, 
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  child: content,
-                                ),
-                              );
+                              double targetZoom = zoomValue.clamp(_minAvailableZoom, _maxAvailableZoom);
+                              setState(() {
+                                _currentZoomLevel = targetZoom;
+                              });
+                              await _controller!.setZoomLevel(targetZoom);
                             },
+                            childDelegate: ListWheelChildBuilderDelegate(
+                              childCount: _availableZoomLevels.length,
+                              builder: (context, index) {
+                                double zoomValue = _availableZoomLevels[index];
+                                bool isSelected = index == _selectedZoomIndex;
+                                
+                                bool isMainLabel = zoomValue % 1 == 0 || zoomValue == 0.5;
+
+                                Widget content;
+                                
+                                if (isSelected) {
+                                  // Aktiver Wert: Kleiner, feiner roter Kreis
+                                  content = AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    width: 32,
+                                    height: 32,
+                                    alignment: Alignment.center,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.redAccent,
+                                    ),
+                                    child: Text(
+                                      '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // Inaktive Werte: Feine Striche und kleine Texte (echter iOS-Look)
+                                  content = Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (isMainLabel)
+                                        Text(
+                                          zoomValue.toStringAsFixed(1).replaceAll('.', ','),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      if (isMainLabel) const SizedBox(height: 3),
+                                      Container(
+                                        width: isMainLabel ? 1.5 : 1.0, // Sehr feine Linien
+                                        height: isMainLabel ? 14.0 : 8.0, 
+                                        decoration: BoxDecoration(
+                                          color: isMainLabel 
+                                              ? Colors.white 
+                                              : Colors.white.withOpacity(0.5), // Zwischenstriche leicht transparent
+                                          borderRadius: BorderRadius.circular(1),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return RotatedBox(
+                                  quarterTurns: 1, 
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: content,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -724,6 +802,23 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ),
                   
+                  Positioned(
+                    bottom: 45,
+                    right: 30,
+                    child: GestureDetector(
+                      onTap: _toggleCameraLens,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white70, width: 2),
+                        ),
+                        child: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 28),
+                      ),
+                    ),
+                  ),
+
                   Positioned(
                     top: 10,
                     left: 10,
@@ -1142,7 +1237,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _noteController3 = TextEditingController(text: widget.note3);
     _addressController = TextEditingController(text: widget.address);
 
-    // WICHTIG: Das Dropdown (z.B. "Вода -> Wasser") fügt wieder direkt das deutsche Wort ("Wasser") in das Feld ein!
     _versorgerOptionsMap = { for (var t in versorgerTerms) t.dropdownLabel : t.outputLang };
     _materialOptionsMap = { for (var t in materialTerms) t.dropdownLabel : t.outputLang };
     _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.dropdownLabel : t.outputLang };
@@ -1160,9 +1254,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
     super.dispose();
   }
 
-  // ==========================================
-  // BLITZSCHNELLES SPEICHERN OHNE LADEZEIT (OHNE KI)
-  // ==========================================
   void _saveAndReturn() {
     Navigator.pop(context, {
       'length': _lengthController.text,
@@ -1239,9 +1330,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const Divider(height: 32, thickness: 2),
 
-            // =========================
-            // BLOCK 1 (Versorger)
-            // =========================
             TextField(
               controller: _noteController1,
               decoration: InputDecoration(
@@ -1307,9 +1395,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 20),
 
-            // =========================
-            // BLOCK 2 (Material)
-            // =========================
             TextField(
               controller: _noteController2,
               decoration: InputDecoration(
@@ -1375,9 +1460,6 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 20),
 
-            // =========================
-            // BLOCK 3 (Tätigkeit)
-            // =========================
             TextField(
               controller: _noteController3,
               decoration: InputDecoration(
@@ -1536,7 +1618,7 @@ class RedDimensionPainter extends CustomPainter {
     }
     
     if (addressPos != null && addressLabel.isNotEmpty) {
-      _drawTextBadge(canvas, addressPos!, addressLabel, Colors.black87, scale: scale);
+      _drawTextBadge(canvas, addressPos!, addressLabel, Colors.black87, scale: scale, sizeMultiplier: 0.5);
     }
   }
 
@@ -1627,12 +1709,14 @@ class RedDimensionPainter extends CustomPainter {
     _drawArrowHead(canvas, end, start, paint, scale);
   }
 
-  void _drawTextBadge(Canvas canvas, Offset pos, String text, Color bgColor, {required double scale}) {
+  void _drawTextBadge(Canvas canvas, Offset pos, String text, Color bgColor, {required double scale, double sizeMultiplier = 1.0}) {
+    final double currentFontSize = math.max(18.0, 26.0 * scale) * sizeMultiplier;
+    
     final textSpan = TextSpan(
       text: text,
       style: TextStyle(
         color: Colors.white,
-        fontSize: math.max(18.0, 26.0 * scale),
+        fontSize: currentFontSize,
         fontWeight: FontWeight.bold,
         height: 1.3,
       ),
@@ -1644,8 +1728,8 @@ class RedDimensionPainter extends CustomPainter {
     );
     textPainter.layout();
 
-    final paddingH = 20.0 * scale; 
-    final paddingV = 12.0 * scale; 
+    final paddingH = 20.0 * scale * sizeMultiplier; 
+    final paddingV = 12.0 * scale * sizeMultiplier; 
 
     final rect = Rect.fromCenter(
       center: pos,
@@ -1653,7 +1737,7 @@ class RedDimensionPainter extends CustomPainter {
       height: textPainter.height + (paddingV * 2),
     );
     
-    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(8.0 * scale)); 
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(8.0 * scale * sizeMultiplier)); 
 
     final bgPaint = Paint()
       ..color = bgColor
