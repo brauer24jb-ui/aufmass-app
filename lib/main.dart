@@ -9,7 +9,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-import 'dart:async'; // WICHTIG für den Linsen-Wechsel-Timer
+import 'dart:async'; 
 
 // Globale Liste für die verfügbaren Kameras
 List<CameraDescription> cameras = [];
@@ -506,6 +506,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   double _maxAvailableZoom = 1.0;
   
   double _currentDisplayZoom = 1.0;
+  double _baseZoomLevel = 1.0; // DIE WIEDER HERGESTELLTE VARIABLE
   int _selectedZoomIndex = 5; // Startet bei 1.0 (Index 5 in der Liste)
 
   late FixedExtentScrollController _zoomScrollController;
