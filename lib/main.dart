@@ -145,11 +145,45 @@ final List<Term> taetigkeitTerms = [
 ];
 
 // ==========================================
-// 4. MEGA-WÖRTERBUCH FÜR FREI-TEXT (UNSICHTBAR IM UI)
+// 4. MAXIMAL ERWEITERTES MEGA-WÖRTERBUCH (UNSICHTBAR IM UI)
 // ==========================================
 final List<Term> megaDictionaryTerms = [
+  // --- GALABAU (Garten- & Landschaftsbau) ---
+  const Term(ru: 'Газонокосилка', uk: 'Газонокосарка', de: 'Rasenmäher'),
+  const Term(ru: 'Газон', uk: 'Газон', de: 'Rasen'),
+  const Term(ru: 'Трава', uk: 'Трава', de: 'Gras/Rasen'),
+  const Term(ru: 'Почва', uk: 'Почва', de: 'Boden'),
+  const Term(ru: 'Перегной', uk: 'Перегній', de: 'Humus'),
+  const Term(ru: 'Мульча', uk: 'Мульча', de: 'Rindenmulch'),
+  const Term(ru: 'Кора', uk: 'Кора', de: 'Rinde'),
+  const Term(ru: 'Сорняк', uk: 'Бур\'ян', de: 'Unkraut'),
+  const Term(ru: 'Растение', uk: 'Рослина', de: 'Pflanze'),
+  const Term(ru: 'Куст', uk: 'Кущ', de: 'Strauch'),
+  const Term(ru: 'Кустарник', uk: 'Чагарник', de: 'Gebüsch'),
+  const Term(ru: 'Дерево', uk: 'Дерево', de: 'Baum'),
+  const Term(ru: 'Деревья', uk: 'Дерева', de: 'Bäume'),
+  const Term(ru: 'Корень', uk: 'Корінь', de: 'Wurzel'),
+  const Term(ru: 'Корни', uk: 'Коріння', de: 'Wurzeln'),
+  const Term(ru: 'Ветка', uk: 'Гілка', de: 'Ast'),
+  const Term(ru: 'Ветки', uk: 'Гілки', de: 'Äste'),
+  const Term(ru: 'Лист', uk: 'Лист', de: 'Blatt'),
+  const Term(ru: 'Листья', uk: 'Листя', de: 'Blätter/Laub'),
+  const Term(ru: 'Листва', uk: 'Листя', de: 'Laub'),
+  const Term(ru: 'Забор', uk: 'Паркан', de: 'Zaun'),
+  const Term(ru: 'Ограда', uk: 'Огорожа', de: 'Zaun/Einfriedung'),
+  const Term(ru: 'Живая изгородь', uk: 'Живопліт', de: 'Hecke'),
+  const Term(ru: 'Ворота', uk: 'Ворота', de: 'Tor'),
+  const Term(ru: 'Столб', uk: 'Стовп', de: 'Pfosten'),
+  const Term(ru: 'Терраса', uk: 'Тераса', de: 'Terrasse'),
+  const Term(ru: 'Клумба', uk: 'Клумба', de: 'Beet'),
+  const Term(ru: 'Пруд', uk: 'Ставок', de: 'Teich'),
+  const Term(ru: 'Удобрение', uk: 'Добриво', de: 'Dünger'),
+  const Term(ru: 'Полив', uk: 'Полив', de: 'Bewässerung'),
+  const Term(ru: 'Семена', uk: 'Насіння', de: 'Saatgut'),
+  
   // --- MASCHINEN & GERÄTE ---
   const Term(ru: 'Миниэкскаватор', uk: 'Мініекскаватор', de: 'Minibagger'),
+  const Term(ru: 'Трактор', uk: 'Трактор', de: 'Traktor'),
   const Term(ru: 'Виброплита', uk: 'Віброплита', de: 'Rüttelplatte'),
   const Term(ru: 'Вибротрамбовка', uk: 'Вібротрамбовка', de: 'Stampfer'),
   const Term(ru: 'Трамбовка', uk: 'Трамбовка', de: 'Stampfer'),
@@ -162,13 +196,14 @@ final List<Term> megaDictionaryTerms = [
   
   // --- WERKZEUG ---
   const Term(ru: 'Лопата', uk: 'Лопата', de: 'Schaufel'),
-  const Term(ru: 'Стиковая лопата', uk: 'Штикова лопата', de: 'Spaten'),
+  const Term(ru: 'Стыковая лопата', uk: 'Штикова лопата', de: 'Spaten'),
   const Term(ru: 'Метла', uk: 'Мітла', de: 'Besen'),
-  const Term(ru: 'Щетка', uk: 'Щітка', de: 'Bürste/Besen'),
+  const Term(ru: 'Щетка', uk: 'Щітка', de: 'Bürste'),
   const Term(ru: 'Молоток', uk: 'Молоток', de: 'Hammer'),
   const Term(ru: 'Кувалда', uk: 'Кувалда', de: 'Vorschlaghammer'),
-  const Term(ru: 'Болгарка', uk: 'Болгарка', de: 'Flex/Trennschleifer'),
+  const Term(ru: 'Болгарка', uk: 'Болгарка', de: 'Flex'),
   const Term(ru: 'Пила', uk: 'Пила', de: 'Säge'),
+  const Term(ru: 'Бензопила', uk: 'Бензопила', de: 'Kettensäge'),
   const Term(ru: 'Дрель', uk: 'Дриль', de: 'Bohrmaschine'),
   const Term(ru: 'Перфоратор', uk: 'Перфоратор', de: 'Bohrhammer'),
   const Term(ru: 'Уровень', uk: 'Рівень', de: 'Wasserwaage'),
@@ -178,8 +213,10 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Метр', uk: 'Метр', de: 'Zollstock'),
   const Term(ru: 'Кельма', uk: 'Кельма', de: 'Kelle'),
   const Term(ru: 'Мастерок', uk: 'Майстерок', de: 'Kelle'),
+  const Term(ru: 'Тачка', uk: 'Тачка', de: 'Schubkarre'),
+  const Term(ru: 'Ведро', uk: 'Відро', de: 'Eimer'),
   
-  // --- MATERIALIEN & BAUTEILE ---
+  // --- MATERIALIEN & BAUTEILE (Hochbau/Tiefbau) ---
   const Term(ru: 'Бетон', uk: 'Бетон', de: 'Beton'),
   const Term(ru: 'Цемент', uk: 'Цемент', de: 'Zement'),
   const Term(ru: 'Раствор', uk: 'Розчин', de: 'Mörtel'),
@@ -217,6 +254,22 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Геотекстиль', uk: 'Геотекстиль', de: 'Vlies'),
   const Term(ru: 'Изоляция', uk: 'Ізоляція', de: 'Isolierung'),
   const Term(ru: 'Битум', uk: 'Бітум', de: 'Bitumen'),
+  const Term(ru: 'Стена', uk: 'Стіна', de: 'Wand/Mauer'),
+  const Term(ru: 'Крыша', uk: 'Дах', de: 'Dach'),
+  const Term(ru: 'Кирпич', uk: 'Цегла', de: 'Ziegel'),
+  const Term(ru: 'Окно', uk: 'Вікно', de: 'Fenster'),
+  const Term(ru: 'Дверь', uk: 'Двері', de: 'Tür'),
+  const Term(ru: 'Фундамент', uk: 'Фундамент', de: 'Fundament'),
+  const Term(ru: 'Ступенька', uk: 'Сходинка', de: 'Stufe'),
+  const Term(ru: 'Лестница', uk: 'Сходи', de: 'Treppe'),
+  const Term(ru: 'Опалубка', uk: 'Опалубка', de: 'Schalung'),
+  const Term(ru: 'Пенопласт', uk: 'Пінопласт', de: 'Styropor/Dämmung'),
+  const Term(ru: 'Гипсокартон', uk: 'Гіпсокартон', de: 'Gipskarton'),
+  const Term(ru: 'Штукатурка', uk: 'Штукатурка', de: 'Putz'),
+  const Term(ru: 'Краска', uk: 'Фарба', de: 'Farbe'),
+  const Term(ru: 'Гвоздь', uk: 'Цвях', de: 'Nagel'),
+  const Term(ru: 'Шуруп', uk: 'Шуруп', de: 'Schraube'),
+  const Term(ru: 'Дюбель', uk: 'Дюбель', de: 'Dübel'),
   
   // --- TIEFBAU & STRASSENBAU SPEZIFISCH ---
   const Term(ru: 'Защитный слой от мороза', uk: 'Морозозахисний шар', de: 'Frostschutzschicht'),
@@ -229,26 +282,18 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Парковка', uk: 'Парковка', de: 'Parkplatz'),
   const Term(ru: 'Разметка', uk: 'Розмітка', de: 'Markierung'),
   const Term(ru: 'Ограждение', uk: 'Огорожа', de: 'Absperrung'),
-  const Term(ru: 'Забор', uk: 'Паркан', de: 'Zaun'),
-  const Term(ru: 'Ворота', uk: 'Ворота', de: 'Tor'),
   const Term(ru: 'Колышек', uk: 'Кілочок', de: 'Pflock/Absteckung'),
+  const Term(ru: 'Ямочный ремонт', uk: 'Ямковий ремонт', de: 'Schlaglochflickung'),
 
-  // --- GALABAU SPEZIFISCH ---
-  const Term(ru: 'Газон', uk: 'Газон', de: 'Rasen'),
-  const Term(ru: 'Дерево', uk: 'Дерево', de: 'Baum'),
-  const Term(ru: 'Куст', uk: 'Кущ', de: 'Strauch'),
-  const Term(ru: 'Растение', uk: 'Рослина', de: 'Pflanze'),
-  const Term(ru: 'Сорняк', uk: 'Бур\'ян', de: 'Unkraut'),
-  const Term(ru: 'Мульча', uk: 'Мульча', de: 'Rindenmulch'),
-  const Term(ru: 'Живая изгородь', uk: 'Живопліт', de: 'Hecke'),
-  
   // --- VERBEN / TÄTIGKEITEN (Konjugiert & Infinitiv) ---
   const Term(ru: 'Равняли', uk: 'Рівняли', de: 'planiert'),
   const Term(ru: 'Равнять', uk: 'Рівняти', de: 'planieren'),
   const Term(ru: 'Спланировали', uk: 'Спланували', de: 'planiert'),
   const Term(ru: 'Копали', uk: 'Копали', de: 'ausgehoben'),
   const Term(ru: 'Выкопали', uk: 'Викопали', de: 'ausgehoben'),
+  const Term(ru: 'Копать', uk: 'Копати', de: 'baggern / graben'),
   const Term(ru: 'Засыпали', uk: 'Засипали', de: 'verfüllt'),
+  const Term(ru: 'Засыпать', uk: 'Засипати', de: 'verfüllen'),
   const Term(ru: 'Утрамбовали', uk: 'Утрамбували', de: 'verdichtet'),
   const Term(ru: 'Уплотняли', uk: 'Ущільнювали', de: 'verdichtet'),
   const Term(ru: 'Трамбовали', uk: 'Трамбували', de: 'verdichtet'),
@@ -260,19 +305,29 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Залили', uk: 'Залили', de: 'betoniert'),
   const Term(ru: 'Замостили', uk: 'Замостили', de: 'gepflastert'),
   const Term(ru: 'Установили', uk: 'Встановили', de: 'gesetzt / montiert'),
-  const Term(ru: 'Сломали', uk: 'Зламали', de: 'abgebrochen'),
+  const Term(ru: 'Поставили', uk: 'Поставили', de: 'aufgestellt'),
+  const Term(ru: 'Сломали', uk: 'Зламали', de: 'abgebrochen / zerstört'),
   const Term(ru: 'Демонтировали', uk: 'Демонтували', de: 'demontiert'),
-  const Term(ru: 'Сняли', uk: 'Зняли', de: 'ausgebaut'),
+  const Term(ru: 'Сняли', uk: 'Зняли', de: 'ausgebaut / entfernt'),
+  const Term(ru: 'Убрали', uk: 'Прибрали', de: 'weggeräumt'),
+  const রঙের', uk: 'Фарбували', de: 'gestrichen'),
   const Term(ru: 'Починили', uk: 'Полагодили', de: 'repariert'),
   const Term(ru: 'Отремонтировали', uk: 'Відремонтували', de: 'repariert'),
   const Term(ru: 'Проверили', uk: 'Перевірили', de: 'geprüft'),
   const Term(ru: 'Замерили', uk: 'Заміряли', de: 'gemessen'),
   const Term(ru: 'Подключили', uk: 'Підключили', de: 'angeschlossen'),
   const Term(ru: 'Очистили', uk: 'Очистили', de: 'gereinigt'),
+  const Term(ru: 'Помыли', uk: 'Помили', de: 'gewaschen'),
+  const Term(ru: 'Смели', uk: 'Змели', de: 'gefegt'),
+  const Term(ru: 'Подмели', uk: 'Підмели', de: 'gefegt'),
+  const Term(ru: 'Посадили', uk: 'Посадили', de: 'gepflanzt'),
+  const Term(ru: 'Посеяли', uk: 'Посіяли', de: 'gesät'),
+  const Term(ru: 'Полили', uk: 'Полили', de: 'gegossen'),
   
-  // --- ZUSTÄNDE & ADJEKTIVE ---
+  // --- ZUSTÄNDE, ADJEKTIVE & MAßE ---
   const Term(ru: 'Сломан', uk: 'Зламаний', de: 'defekt'),
   const Term(ru: 'Сломана', uk: 'Зламана', de: 'defekt'),
+  const Term(ru: 'Сломано', uk: 'Зламано', de: 'defekt'),
   const Term(ru: 'Порван', uk: 'Порваний', de: 'gerissen'),
   const Term(ru: 'Трещина', uk: 'Тріщина', de: 'Riss'),
   const Term(ru: 'Новый', uk: 'Новий', de: 'neu'),
@@ -283,6 +338,7 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Широко', uk: 'Широко', de: 'breit'),
   const Term(ru: 'Длинно', uk: 'Довго', de: 'lang'),
   const Term(ru: 'Коротко', uk: 'Коротко', de: 'kurz'),
+  const Term(ru: 'Высоко', uk: 'Високо', de: 'hoch'),
   const Term(ru: 'Уклон', uk: 'Ухил', de: 'Gefälle'),
   const Term(ru: 'Шов', uk: 'Шов', de: 'Fuge'),
   const Term(ru: 'Стык', uk: 'Стик', de: 'Stoß'),
@@ -299,9 +355,13 @@ final List<Term> megaDictionaryTerms = [
   const Term(ru: 'Готово', uk: 'Готово', de: 'fertig'),
   const Term(ru: 'Пусто', uk: 'Пусто', de: 'leer'),
   const Term(ru: 'Полный', uk: 'Повний', de: 'voll'),
+  const Term(ru: 'Метр', uk: 'Метр', de: 'Meter'),
+  const Term(ru: 'Сантиметр', uk: 'Сантиметр', de: 'Zentimeter'),
+  const Term(ru: 'Штука', uk: 'Штука', de: 'Stück'),
+  const Term(ru: 'Тонна', uk: 'Тонна', de: 'Tonne'),
 ];
 
-// Zusammenfassung ALLES Wörter für den automatischen Live-Übersetzer
+// Zusammenfassung ALLER Wörter für den automatischen Live-Übersetzer
 final List<Term> allDictionaryTerms = [
   ...versorgerTerms,
   ...materialTerms,
@@ -1504,7 +1564,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
     sortedTerms.sort((a, b) => b.ru.length.compareTo(a.ru.length));
 
     for (var term in sortedTerms) {
-      // Sucht flexibel (egal ob Groß- oder Kleinschreibung) und ersetzt es durch Deutsch
+      // Sucht flexibel (egal ob Groß- или Kleinschreibung) und ersetzt es durch Deutsch
       result = result.replaceAll(RegExp(term.ru, caseSensitive: false), term.de);
       result = result.replaceAll(RegExp(term.uk, caseSensitive: false), term.de);
     }
