@@ -486,11 +486,8 @@ class CustomCameraScreen extends StatefulWidget {
 
 class _CustomCameraScreenState extends State<CustomCameraScreen> {
   CameraController? _controller;
+  Future<void>? _initializeControllerFuture;
   bool _isTakingPicture = false;
-  
-  // Status-Variablen für das fließende Umschalten
-  bool _isCameraReady = false;
-  bool _isSwitchingLens = false;
 
   int _wideIndex = -1;
   int _ultraWideIndex = -1;
@@ -552,7 +549,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     _initCamera(_currentCameraIndex, 1.0);
   }
 
-  // Überarbeitete Kamera-Initialisierung OHNE FutureBuilder (verhindert das Verschwinden der UI)
+  // ROHE INITIALISIERUNG OHNE KÜNSTLICHE VERZÖGERUNGEN
   Future<void> _initCamera(int cameraIndex, double displayZoom) async {
     if (_controller != null) {
       await _controller!.dispose();
@@ -574,12 +571,8 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       _currentCameraIndex = cameraIndex;
       _applyZoom(displayZoom);
 
-      // Kamera ist bereit, Blende kann wieder hochfahren
       if (mounted) {
-        setState(() {
-          _isCameraReady = true;
-          _isSwitchingLens = false;
-        });
+        setState(() {});
       }
     } catch (e) {
       debugPrint("Kamera konnte nicht geladen werden: $e");
@@ -587,7 +580,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   }
 
   void _applyZoom(double displayZoom) {
-    if (_controller == null || !_isCameraReady) return;
+    if (_controller == null || !_controller!.value.isInitialized) return;
 
     double internalZoom = displayZoom;
     if (_currentCameraIndex == _ultraWideIndex) {
@@ -620,8 +613,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     });
   }
 
-  // Steuert die Crossfade-Blende beim Linsenwechsel
-  void _evaluateLensSwitch(double displayZoom) async {
+  void _evaluateLensSwitch(double displayZoom) {
     int targetLens = _currentCameraIndex;
 
     if (displayZoom < 1.0 && _ultraWideIndex != -1) {
@@ -633,9 +625,8 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     }
 
     if (targetLens != _currentCameraIndex) {
-      // Zeige die schwarze Blende (Fade out)
-      setState(() { _isSwitchingLens = true; });
-      await _initCamera(targetLens, displayZoom);
+      // Roher Wechsel ohne SetState für Blenden
+      _initCamera(targetLens, displayZoom);
     }
   }
 
@@ -652,7 +643,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   }
 
   Future<void> _takePictureAndGo() async {
-    if (_isTakingPicture || _controller == null || !_isCameraReady) return;
+    if (_isTakingPicture || _controller == null || !_controller!.value.isInitialized) return;
 
     try {
       setState(() {
@@ -721,12 +712,11 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        // FutureBuilder WURDE ENTFERNT. Die UI bleibt jetzt immer starr und stabil stehen!
         child: Stack(
           children: [
             // 1. Das eigentliche Kamera-Bild
             Positioned.fill(
-              child: (_isCameraReady && _controller != null && _controller!.value.isInitialized)
+              child: (_controller != null && _controller!.value.isInitialized)
                   ? GestureDetector(
                       onScaleStart: (details) {
                         _baseZoomLevel = _currentDisplayZoom;
@@ -755,18 +745,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   : const SizedBox.shrink(),
             ),
 
-            // 2. DIE WEICHE BLENDE (Versteckt das Flackern des Sensors beim Umschalten)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: AnimatedOpacity(
-                  opacity: _isSwitchingLens || !_isCameraReady ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 250), // Sanfter Übergang
-                  child: Container(color: Colors.black),
-                ),
-              ),
-            ),
-
-            // 3. Zoom-Rad (Verschwindet ab jetzt nicht mehr beim Linsenwechsel!)
+            // 2. Zoom-Rad (Stabile UI, verschwindet beim Wechsel nicht)
             Positioned(
               bottom: 120, 
               left: 0,
@@ -859,7 +838,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
 
-            // 4. Schnellwahl-Buttons
+            // 3. Schnellwahl-Buttons
             Positioned(
               bottom: 200, 
               left: 0,
@@ -875,7 +854,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
 
-            // 5. Auslöser-Button
+            // 4. Auslöser-Button
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -898,7 +877,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
             
-            // 6. Zurück-Button
+            // 5. Zurück-Button
             Positioned(
               top: 10,
               left: 10,
