@@ -516,12 +516,17 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     super.initState();
     _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
 
+    // HIER IST DAS NEUE FALLBACK-SYSTEM FÜR DIE LINSEN
+    List<int> backCams = [];
     for (int i = 0; i < cameras.length; i++) {
       if (cameras[i].lensDirection == CameraLensDirection.back) {
+        backCams.add(i);
         String name = cameras[i].name.toLowerCase();
-        if (name.contains('ultra wide') || name.contains('ultrawide') || name.contains('0.5')) {
+        
+        // Versuch 1: Namen-Analyse (inklusive deutscher Begriffe)
+        if (name.contains('ultra') || name.contains('0.5') || name.contains('0,5')) {
           _ultraWideIndex = i;
-        } else if (name.contains('tele') || name.contains('telephoto')) {
+        } else if (name.contains('tele')) {
           _teleIndex = i;
         } else if (_wideIndex == -1) {
           _wideIndex = i;
@@ -529,9 +534,21 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       }
     }
 
+    // Versuch 2: Hartes Fallback, falls Apple die Namen versteckt (passiert oft auf deutschen Geräten)
+    if (_ultraWideIndex == -1 && backCams.length > 1) {
+      if (backCams.length == 3) {
+        // Bei 3 Kameras ist es fast immer: Wide, Tele, Ultra
+        _teleIndex = backCams[1];
+        _ultraWideIndex = backCams[2];
+      } else if (backCams.length == 2) {
+        // Bei 2 Kameras: Wide, Ultra
+        _ultraWideIndex = backCams[1];
+      }
+    }
+
+    // Falls immer noch nichts gefunden, Standardkamera nehmen
     if (_wideIndex == -1) {
-      _wideIndex = cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
-      if (_wideIndex == -1) _wideIndex = 0;
+      _wideIndex = backCams.isNotEmpty ? backCams[0] : 0;
     }
 
     _currentCameraIndex = _wideIndex;
@@ -568,6 +585,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
     double internalZoom = displayZoom;
     if (_currentCameraIndex == _ultraWideIndex) {
+      // 0.5x UI bedeutet auf der Ultralinse intern 1.0x
       internalZoom = displayZoom * 2.0; 
     } else if (_currentCameraIndex == _wideIndex) {
       internalZoom = displayZoom;
@@ -575,12 +593,12 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       internalZoom = displayZoom / 3.0; 
     }
 
-    // Sicherer Fallback: Wenn das Gerät z.B. 0.5 sperrt, bleibt es auf dem Minium (1.0)
+    // Klemmen, damit Apple die App nicht abstürzen lässt
     internalZoom = internalZoom.clamp(_minAvailableZoom, _maxAvailableZoom);
     try {
       _controller!.setZoomLevel(internalZoom);
     } catch (e) {
-      debugPrint("Zoomfehler (Apple blockiert diese Stufe): $e");
+      debugPrint("Zoom blockiert: $e");
     }
   }
 
@@ -592,19 +610,22 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
     _applyZoom(_currentDisplayZoom);
 
+    // Stottern verhindern: Linse wechselt erst, wenn Rad stoppt
     _lensSwitchTimer?.cancel();
-    _lensSwitchTimer = Timer(const Duration(milliseconds: 300), () {
+    _lensSwitchTimer = Timer(const Duration(milliseconds: 250), () {
       _evaluateLensSwitch(_currentDisplayZoom);
     });
   }
 
   void _evaluateLensSwitch(double displayZoom) {
-    int targetLens = _wideIndex;
+    int targetLens = _currentCameraIndex;
 
     if (displayZoom < 1.0 && _ultraWideIndex != -1) {
       targetLens = _ultraWideIndex;
     } else if (displayZoom >= 3.0 && _teleIndex != -1) {
       targetLens = _teleIndex;
+    } else if (displayZoom >= 1.0 && displayZoom < 3.0 && _wideIndex != -1) {
+      targetLens = _wideIndex;
     }
 
     if (targetLens != _currentCameraIndex) {
@@ -622,14 +643,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     });
     _zoomScrollController.jumpToItem(idx);
     _evaluateLensSwitch(targetZoom);
-  }
-
-  @override
-  void dispose() {
-    _lensSwitchTimer?.cancel();
-    _zoomScrollController.dispose();
-    _controller?.dispose();
-    super.dispose();
   }
 
   Future<void> _takePictureAndGo() async {
@@ -688,6 +701,14 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _lensSwitchTimer?.cancel();
+    _zoomScrollController.dispose();
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
@@ -773,18 +794,18 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                                       SizedBox(
                                         height: 20,
                                         child: OverflowBox(
-                                          maxWidth: 80, // Genug Platz in der Breite
-                                          child: Center(
-                                            child: Text(
-                                              zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
-                                              style: TextStyle(
-                                                color: isSelected ? Colors.yellow : Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: isSelected ? 15 : 13,
-                                              ),
-                                              maxLines: 1,
-                                              softWrap: false, // Verhindert Zeilenumbruch
+                                          maxWidth: 120, // Genug Platz in der Breite
+                                          maxHeight: 50,
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.yellow : Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: isSelected ? 15 : 13,
                                             ),
+                                            maxLines: 1,
+                                            softWrap: false, // Verhindert Zeilenumbruch radikal
                                           ),
                                         ),
                                       ),
