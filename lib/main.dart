@@ -78,10 +78,8 @@ final Map<String, Term> toolTerms = {
 };
 
 // ==========================================
-// MEGA-WÖRTERBUCH: TIEFBAU, GALABAU, STRASSENBAU
+// 1. DROPDOWN: VERSORGER
 // ==========================================
-
-// 1. Versorger / Leitungen
 final List<Term> versorgerTerms = [
   const Term(ru: 'Вода', uk: 'Вода', de: 'Wasser'),
   const Term(ru: 'Газ', uk: 'Газ', de: 'Gas'),
@@ -91,75 +89,224 @@ final List<Term> versorgerTerms = [
   const Term(ru: 'Канализация', uk: 'Каналізація', de: 'Abwasser'),
   const Term(ru: 'Дождевая вода', uk: 'Дощова вода', de: 'Regenwasser'),
   const Term(ru: 'Смешанная вода', uk: 'Змішана вода', de: 'Mischwasser'),
+  const Term(ru: 'Дренаж', uk: 'Дренаж', de: 'Drainage'),
+  const Term(ru: 'Освещение', uk: 'Освітлення', de: 'Beleuchtung'),
 ];
 
-// 2. Material (massiv erweitert)
+// ==========================================
+// 2. DROPDOWN: MATERIAL
+// ==========================================
 final List<Term> materialTerms = [
   const Term(ru: 'Асфальт', uk: 'Асфальт', de: 'Asphalt'),
-  const Term(ru: 'Битум', uk: 'Бітум', de: 'Bitumen'),
   const Term(ru: 'Бетонная плитка', uk: 'Бетонна плитка', de: 'Betonsteinpflaster'),
-  const Term(ru: 'Клинкер', uk: 'Клінкер', de: 'Klinkerpflaster'),
   const Term(ru: 'Природный камень', uk: 'Природний камінь', de: 'Natursteinpflaster'),
+  const Term(ru: 'Клинкер', uk: 'Клінкер', de: 'Klinkerpflaster'),
+  const Term(ru: 'Узловая брусчатка', uk: 'Замкова бруківка', de: 'Verbundsteinpflaster'),
+  const Term(ru: 'Бордюр', uk: 'Бордюр', de: 'Bordstein'),
+  const Term(ru: 'Поребрик', uk: 'Поребрик', de: 'Kantenstein/Tiefbord'),
+  const Term(ru: 'Лоток', uk: 'Жолоб', de: 'Rinne'),
+  const Term(ru: 'Колодец', uk: 'Колодязь', de: 'Schacht'),
+  const Term(ru: 'Г-образный камень', uk: 'Г-подібний блок', de: 'L-Stein'),
+  const Term(ru: 'Трубы KG', uk: 'Труби KG', de: 'KG Rohre'),
+  const Term(ru: 'Трубы KG 2000', uk: 'Труби KG 2000', de: 'KG 2000 Rohre'),
+  const Term(ru: 'Кабельная труба', uk: 'Кабельна труба', de: 'Kabelschutzrohr'),
   const Term(ru: 'Бетонный щебень', uk: 'Бетонний щебінь', de: 'Betonschotter'),
   const Term(ru: 'Природный щебень', uk: 'Природний щебінь', de: 'Naturschotter'),
   const Term(ru: 'Минеральная смесь', uk: 'Мінеральна суміш', de: 'Mineralgemisch'),
-  const Term(ru: 'Защитный слой от мороза', uk: 'Морозозахисний шар', de: 'Frostschutzschicht'),
   const Term(ru: 'Дробленый песок', uk: 'Дроблений пісок', de: 'Brechsand'),
   const Term(ru: 'Засыпной песок', uk: 'Засипний пісок', de: 'Füllsand'),
-  const Term(ru: 'Чернозем', uk: 'Чорнозем', de: 'Mutterboden'),
+  const Term(ru: 'Сплит', uk: 'Спліт', de: 'Splitt'),
   const Term(ru: 'Грунт', uk: 'Ґрунт', de: 'Boden'),
-  const Term(ru: 'Земля', uk: 'Земля', de: 'Erde'),
-  const Term(ru: 'Бордюр', uk: 'Бордюр', de: 'Bordstein'),
-  const Term(ru: 'Желоб', uk: 'Жолоб', de: 'Rinne'),
-  const Term(ru: 'Г-образный камень', uk: 'Г-подібний блок', de: 'L-Stein'),
-  const Term(ru: 'Колодец', uk: 'Колодязь', de: 'Schacht'),
-  const Term(ru: 'Трубы KG', uk: 'Труби KG', de: 'KG Rohre'),
-  const Term(ru: 'Кабельная труба', uk: 'Кабельна труба', de: 'Kabelschutzrohr'),
-  const Term(ru: 'Бетон', uk: 'Бетон', de: 'Beton'),
-  const Term(ru: 'Цемент', uk: 'Цемент', de: 'Zement'),
-  const Term(ru: 'Щебень', uk: 'Щебінь', de: 'Schotter'),
-  const Term(ru: 'Гравий', uk: 'Гравій', de: 'Kies'),
-  const Term(ru: 'Раствор', uk: 'Розчин', de: 'Mörtel'),
+  const Term(ru: 'Чернозем', uk: 'Чорнозем', de: 'Mutterboden'),
   const Term(ru: 'Кабель', uk: 'Кабель', de: 'Kabel'),
 ];
 
-// 3. Tätigkeit / Maschinen (massiv erweitert)
+// ==========================================
+// 3. DROPDOWN: TÄTIGKEIT
+// ==========================================
 final List<Term> taetigkeitTerms = [
   const Term(ru: 'Установлено', uk: 'Встановлено', de: 'gesetzt'),
   const Term(ru: 'Уложено', uk: 'Покладено', de: 'verlegt'),
-  const Term(ru: 'Встроено', uk: 'Вмонтовано', de: 'eingebaut'),
   const Term(ru: 'Забетонировано', uk: 'Забетоновано', de: 'betoniert'),
   const Term(ru: 'Заасфальтировано', uk: 'Заасфальтовано', de: 'asphaltiert'),
   const Term(ru: 'Уплотнено', uk: 'Ущільнено', de: 'verdichtet'),
-  const Term(ru: 'Демонтировано', uk: 'Демонтовано', de: 'aufgenommen'),
-  const Term(ru: 'Снесено', uk: 'Знесено', de: 'abgebrochen'),
   const Term(ru: 'Отфрезеровано', uk: 'Відфрезеровано', de: 'gefräst'),
   const Term(ru: 'Отрезано', uk: 'Відрізано', de: 'geschnitten'),
+  const Term(ru: 'Демонтировано', uk: 'Демонтовано', de: 'aufgenommen'),
   const Term(ru: 'Выемка грунта', uk: 'Виїмка ґрунту', de: 'Aushub'),
+  const Term(ru: 'Траншея', uk: 'Траншея', de: 'Graben'),
+  const Term(ru: 'Колодец/Яма', uk: 'Котлован/Яма', de: 'Grube'),
+  const Term(ru: 'Шурф', uk: 'Шурф', de: 'Suchschachtung'),
   const Term(ru: 'Экскаватор', uk: 'Екскаватор', de: 'Bagger'),
   const Term(ru: 'Погрузчик', uk: 'Навантажувач', de: 'Radlader'),
+  const Term(ru: 'Насос', uk: 'Насос', de: 'Pumpe'),
+  const Term(ru: 'Часы', uk: 'Години', de: 'Stunden'),
+  const Term(ru: 'Почасовая оплата', uk: 'Погодинна оплата', de: 'Stundenlohn'),
+];
+
+// ==========================================
+// 4. MEGA-WÖRTERBUCH FÜR FREI-TEXT (UNSICHTBAR IM UI)
+// ==========================================
+final List<Term> megaDictionaryTerms = [
+  // --- MASCHINEN & GERÄTE ---
+  const Term(ru: 'Миниэкскаватор', uk: 'Мініекскаватор', de: 'Minibagger'),
   const Term(ru: 'Виброплита', uk: 'Віброплита', de: 'Rüttelplatte'),
   const Term(ru: 'Вибротрамбовка', uk: 'Вібротрамбовка', de: 'Stampfer'),
+  const Term(ru: 'Трамбовка', uk: 'Трамбовка', de: 'Stampfer'),
   const Term(ru: 'Каток', uk: 'Коток', de: 'Walze'),
   const Term(ru: 'Грузовик', uk: 'Вантажівка', de: 'LKW'),
   const Term(ru: 'Кран', uk: 'Кран', de: 'Kran'),
-  const Term(ru: 'Насос', uk: 'Насос', de: 'Pumpe'),
-  const Term(ru: 'Часы', uk: 'Години', de: 'Stunden'),
-  const Term(ru: 'Паушально', uk: 'Паушально', de: 'Pauschal'),
-  const Term(ru: 'Траншея', uk: 'Траншея', de: 'Graben'),
-  const Term(ru: 'Яма', uk: 'Яма', de: 'Grube'),
-  const Term(ru: 'Шурф', uk: 'Шурф', de: 'Suchschachtung'),
+  const Term(ru: 'Компрессор', uk: 'Компресор', de: 'Kompressor'),
+  const Term(ru: 'Думпер', uk: 'Думпер', de: 'Dumper'),
+  const Term(ru: 'Генератор', uk: 'Генератор', de: 'Stromaggregat'),
+  
+  // --- WERKZEUG ---
+  const Term(ru: 'Лопата', uk: 'Лопата', de: 'Schaufel'),
+  const Term(ru: 'Стиковая лопата', uk: 'Штикова лопата', de: 'Spaten'),
+  const Term(ru: 'Метла', uk: 'Мітла', de: 'Besen'),
+  const Term(ru: 'Щетка', uk: 'Щітка', de: 'Bürste/Besen'),
+  const Term(ru: 'Молоток', uk: 'Молоток', de: 'Hammer'),
+  const Term(ru: 'Кувалда', uk: 'Кувалда', de: 'Vorschlaghammer'),
+  const Term(ru: 'Болгарка', uk: 'Болгарка', de: 'Flex/Trennschleifer'),
+  const Term(ru: 'Пила', uk: 'Пила', de: 'Säge'),
+  const Term(ru: 'Дрель', uk: 'Дриль', de: 'Bohrmaschine'),
+  const Term(ru: 'Перфоратор', uk: 'Перфоратор', de: 'Bohrhammer'),
+  const Term(ru: 'Уровень', uk: 'Рівень', de: 'Wasserwaage'),
+  const Term(ru: 'Лазер', uk: 'Лазер', de: 'Laser'),
+  const Term(ru: 'Нивелир', uk: 'Нівелір', de: 'Nivelliergerät'),
+  const Term(ru: 'Рулетка', uk: 'Рулетка', de: 'Maßband'),
+  const Term(ru: 'Метр', uk: 'Метр', de: 'Zollstock'),
+  const Term(ru: 'Кельма', uk: 'Кельма', de: 'Kelle'),
+  const Term(ru: 'Мастерок', uk: 'Майстерок', de: 'Kelle'),
+  
+  // --- MATERIALIEN & BAUTEILE ---
+  const Term(ru: 'Бетон', uk: 'Бетон', de: 'Beton'),
+  const Term(ru: 'Цемент', uk: 'Цемент', de: 'Zement'),
+  const Term(ru: 'Раствор', uk: 'Розчин', de: 'Mörtel'),
+  const Term(ru: 'Щебень', uk: 'Щебінь', de: 'Schotter'),
+  const Term(ru: 'Гравий', uk: 'Гравій', de: 'Kies'),
+  const Term(ru: 'Песок', uk: 'Пісок', de: 'Sand'),
+  const Term(ru: 'Смесь', uk: 'Суміш', de: 'Gemisch'),
+  const Term(ru: 'Земля', uk: 'Земля', de: 'Erde'),
+  const Term(ru: 'Глина', uk: 'Глина', de: 'Lehm/Ton'),
+  const Term(ru: 'Грязь', uk: 'Бруд', de: 'Schlamm/Dreck'),
+  const Term(ru: 'Мусор', uk: 'Сміття', de: 'Bauschutt'),
+  const Term(ru: 'Дерево', uk: 'Дерево', de: 'Holz'),
+  const Term(ru: 'Доска', uk: 'Дошка', de: 'Brett'),
+  const Term(ru: 'Брус', uk: 'Брус', de: 'Balken'),
+  const Term(ru: 'Сталь', uk: 'Сталь', de: 'Stahl'),
+  const Term(ru: 'Арматура', uk: 'Арматура', de: 'Bewehrung/Armierung'),
+  const Term(ru: 'Сетка', uk: 'Сітка', de: 'Baustahlgewebe'),
+  const Term(ru: 'Камень', uk: 'Камінь', de: 'Stein'),
+  const Term(ru: 'Камни', uk: 'Камені', de: 'Steine'),
+  const Term(ru: 'Плитка', uk: 'Плитка', de: 'Platten'),
+  const Term(ru: 'Брусчатка', uk: 'Бруківка', de: 'Pflaster'),
+  const Term(ru: 'Труба', uk: 'Труба', de: 'Rohr'),
+  const Term(ru: 'Трубы', uk: 'Труби', de: 'Rohre'),
+  const Term(ru: 'Провод', uk: 'Провід', de: 'Leitung'),
+  const Term(ru: 'Шланг', uk: 'Шланг', de: 'Schlauch'),
+  const Term(ru: 'Муфта', uk: 'Муфта', de: 'Muffe'),
+  const Term(ru: 'Уплотнитель', uk: 'Ущільнювач', de: 'Dichtung'),
+  const Term(ru: 'Крышка', uk: 'Кришка', de: 'Deckel'),
+  const Term(ru: 'Люк', uk: 'Люк', de: 'Schachtdeckel'),
+  const Term(ru: 'Конус', uk: 'Конус', de: 'Schachtkonus'),
+  const Term(ru: 'Кольцо', uk: 'Кільце', de: 'Schachtring'),
+  const Term(ru: 'Сток', uk: 'Стік', de: 'Ablauf/Gulli'),
+  const Term(ru: 'Решетка', uk: 'Решітка', de: 'Gitter/Rost'),
+  const Term(ru: 'Пленка', uk: 'Плівка', de: 'Folie'),
+  const Term(ru: 'Геотекстиль', uk: 'Геотекстиль', de: 'Vlies'),
+  const Term(ru: 'Изоляция', uk: 'Ізоляція', de: 'Isolierung'),
+  const Term(ru: 'Битум', uk: 'Бітум', de: 'Bitumen'),
+  
+  // --- TIEFBAU & STRASSENBAU SPEZIFISCH ---
+  const Term(ru: 'Защитный слой от мороза', uk: 'Морозозахисний шар', de: 'Frostschutzschicht'),
+  const Term(ru: 'Несущий слой', uk: 'Несучий шар', de: 'Tragschicht'),
+  const Term(ru: 'Верхний слой', uk: 'Верхній шар', de: 'Deckschicht'),
   const Term(ru: 'Планум', uk: 'Планум', de: 'Planum'),
+  const Term(ru: 'Тротуар', uk: 'Тротуар', de: 'Gehweg'),
+  const Term(ru: 'Дорога', uk: 'Дорога', de: 'Fahrbahn'),
+  const Term(ru: 'Улица', uk: 'Вулиця', de: 'Straße'),
+  const Term(ru: 'Парковка', uk: 'Парковка', de: 'Parkplatz'),
+  const Term(ru: 'Разметка', uk: 'Розмітка', de: 'Markierung'),
+  const Term(ru: 'Ограждение', uk: 'Огорожа', de: 'Absperrung'),
+  const Term(ru: 'Забор', uk: 'Паркан', de: 'Zaun'),
+  const Term(ru: 'Ворота', uk: 'Ворота', de: 'Tor'),
+  const Term(ru: 'Колышек', uk: 'Кілочок', de: 'Pflock/Absteckung'),
+
+  // --- GALABAU SPEZIFISCH ---
+  const Term(ru: 'Газон', uk: 'Газон', de: 'Rasen'),
+  const Term(ru: 'Дерево', uk: 'Дерево', de: 'Baum'),
+  const Term(ru: 'Куст', uk: 'Кущ', de: 'Strauch'),
+  const Term(ru: 'Растение', uk: 'Рослина', de: 'Pflanze'),
+  const Term(ru: 'Сорняк', uk: 'Бур\'ян', de: 'Unkraut'),
+  const Term(ru: 'Мульча', uk: 'Мульча', de: 'Rindenmulch'),
+  const Term(ru: 'Живая изгородь', uk: 'Живопліт', de: 'Hecke'),
+  
+  // --- VERBEN / TÄTIGKEITEN (Konjugiert & Infinitiv) ---
+  const Term(ru: 'Равняли', uk: 'Рівняли', de: 'planiert'),
+  const Term(ru: 'Равнять', uk: 'Рівняти', de: 'planieren'),
+  const Term(ru: 'Спланировали', uk: 'Спланували', de: 'planiert'),
+  const Term(ru: 'Копали', uk: 'Копали', de: 'ausgehoben'),
+  const Term(ru: 'Выкопали', uk: 'Викопали', de: 'ausgehoben'),
+  const Term(ru: 'Засыпали', uk: 'Засипали', de: 'verfüllt'),
+  const Term(ru: 'Утрамбовали', uk: 'Утрамбували', de: 'verdichtet'),
+  const Term(ru: 'Уплотняли', uk: 'Ущільнювали', de: 'verdichtet'),
+  const Term(ru: 'Трамбовали', uk: 'Трамбували', de: 'verdichtet'),
+  const Term(ru: 'Резали', uk: 'Різали', de: 'geschnitten'),
+  const Term(ru: 'Отрезали', uk: 'Відрізали', de: 'abgeschnitten'),
+  const Term(ru: 'Пилили', uk: 'Пилили', de: 'geflext / gesägt'),
+  const Term(ru: 'Уложили', uk: 'Поклали', de: 'verlegt'),
+  const Term(ru: 'Положили', uk: 'Поклали', de: 'gelegt'),
+  const Term(ru: 'Залили', uk: 'Залили', de: 'betoniert'),
+  const Term(ru: 'Замостили', uk: 'Замостили', de: 'gepflastert'),
+  const Term(ru: 'Установили', uk: 'Встановили', de: 'gesetzt / montiert'),
+  const Term(ru: 'Сломали', uk: 'Зламали', de: 'abgebrochen'),
+  const Term(ru: 'Демонтировали', uk: 'Демонтували', de: 'demontiert'),
+  const Term(ru: 'Сняли', uk: 'Зняли', de: 'ausgebaut'),
+  const Term(ru: 'Починили', uk: 'Полагодили', de: 'repariert'),
+  const Term(ru: 'Отремонтировали', uk: 'Відремонтували', de: 'repariert'),
+  const Term(ru: 'Проверили', uk: 'Перевірили', de: 'geprüft'),
+  const Term(ru: 'Замерили', uk: 'Заміряли', de: 'gemessen'),
+  const Term(ru: 'Подключили', uk: 'Підключили', de: 'angeschlossen'),
+  const Term(ru: 'Очистили', uk: 'Очистили', de: 'gereinigt'),
+  
+  // --- ZUSTÄNDE & ADJEKTIVE ---
   const Term(ru: 'Сломан', uk: 'Зламаний', de: 'defekt'),
+  const Term(ru: 'Сломана', uk: 'Зламана', de: 'defekt'),
+  const Term(ru: 'Порван', uk: 'Порваний', de: 'gerissen'),
+  const Term(ru: 'Трещина', uk: 'Тріщина', de: 'Riss'),
   const Term(ru: 'Новый', uk: 'Новий', de: 'neu'),
+  const Term(ru: 'Новая', uk: 'Нова', de: 'neu'),
   const Term(ru: 'Старый', uk: 'Старий', de: 'alt'),
+  const Term(ru: 'Старая', uk: 'Стара', de: 'alt'),
+  const Term(ru: 'Глубоко', uk: 'Глибоко', de: 'tief'),
+  const Term(ru: 'Широко', uk: 'Широко', de: 'breit'),
+  const Term(ru: 'Длинно', uk: 'Довго', de: 'lang'),
+  const Term(ru: 'Коротко', uk: 'Коротко', de: 'kurz'),
+  const Term(ru: 'Уклон', uk: 'Ухил', de: 'Gefälle'),
+  const Term(ru: 'Шов', uk: 'Шов', de: 'Fuge'),
+  const Term(ru: 'Стык', uk: 'Стик', de: 'Stoß'),
+  const Term(ru: 'Край', uk: 'Край', de: 'Kante/Rand'),
+  const Term(ru: 'Угол', uk: 'Кут', de: 'Ecke/Winkel'),
+  const Term(ru: 'Прямо', uk: 'Прямо', de: 'gerade'),
+  const Term(ru: 'Криво', uk: 'Криво', de: 'schief'),
+  const Term(ru: 'Мокрый', uk: 'Мокрий', de: 'nass'),
+  const Term(ru: 'Сухой', uk: 'Сухий', de: 'trocken'),
+  const Term(ru: 'Чистый', uk: 'Чистий', de: 'sauber'),
+  const Term(ru: 'Грязный', uk: 'Брудний', de: 'schmutzig'),
+  const Term(ru: 'Тяжелый', uk: 'Важкий', de: 'schwer'),
+  const Term(ru: 'Легкий', uk: 'Легкий', de: 'leicht'),
+  const Term(ru: 'Готово', uk: 'Готово', de: 'fertig'),
+  const Term(ru: 'Пусто', uk: 'Пусто', de: 'leer'),
+  const Term(ru: 'Полный', uk: 'Повний', de: 'voll'),
 ];
 
-// Kombiniertes Dictionary für die automatische Live-Übersetzung
+// Zusammenfassung ALLES Wörter für den automatischen Live-Übersetzer
 final List<Term> allDictionaryTerms = [
   ...versorgerTerms,
   ...materialTerms,
   ...taetigkeitTerms,
+  ...megaDictionaryTerms,
 ];
 
 final Term backTerm = const Term(ru: 'Назад', uk: 'Назад', de: 'Zurück');
@@ -259,7 +406,7 @@ String get uiSelect2 {
   return '2. Выбор материала (2. Auswahl Material)';
 }
 String get uiSelect3 {
-  if (globalAppLang == AppLang.ukDe) return '3. Вибір деятельности (3. Auswahl Tätigkeit)';
+  if (globalAppLang == AppLang.ukDe) return '3. Вибір діяльності (3. Auswahl Tätigkeit)';
   if (globalAppLang == AppLang.ruUk) return '3. Выбор діяльності (3. Діяльність)';
   if (globalAppLang == AppLang.de) return '3. Auswahl (Tätigkeit)';
   return '3. Выбор деятельности (3. Auswahl Tätigkeit)';
@@ -1346,18 +1493,18 @@ class _DataInputScreenState extends State<DataInputScreen> {
   }
 
   // ==========================================
-  // HIER ARBEITET DAS OFFLINE-WÖRTERBUCH
+  // HIER ARBEITET DAS MEGA-OFFLINE-WÖRTERBUCH
   // ==========================================
   String _translateLive(String input) {
     if (input.trim().isEmpty) return '';
     String result = input;
     
-    // Wir sortieren nach Länge (lange Wörter zuerst ersetzen)
+    // Sortiere nach Länge, damit lange Wörter zuerst ersetzt werden
     List<Term> sortedTerms = List.from(allDictionaryTerms);
     sortedTerms.sort((a, b) => b.ru.length.compareTo(a.ru.length));
 
     for (var term in sortedTerms) {
-      // Sucht im Text nach dem russischen oder ukrainischen Wort (egal ob groß/klein)
+      // Sucht flexibel (egal ob Groß- oder Kleinschreibung) und ersetzt es durch Deutsch
       result = result.replaceAll(RegExp(term.ru, caseSensitive: false), term.de);
       result = result.replaceAll(RegExp(term.uk, caseSensitive: false), term.de);
     }
@@ -1369,7 +1516,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
       'length': _lengthController.text,
       'width': _widthController.text,
       'depth': _depthController.text,
-      // HIER landet auf dem Bild NUR die übersetzte, deutsche Version!
+      // HIER GEHT JETZT NUR DAS ÜBERSETZTE DEUTSCHE WORT AUF DAS FOTO
       'note1': _translateLive(_noteController1.text),
       'note2': _translateLive(_noteController2.text),
       'note3': _translateLive(_noteController3.text),
@@ -1447,7 +1594,7 @@ class _DataInputScreenState extends State<DataInputScreen> {
             TextField(
               controller: _noteController1,
               onChanged: (val) {
-                // Löst ein Live-Update für die deutsche Übersetzung darunter aus
+                // UI aktualisieren, damit die Live-Übersetzung angezeigt wird
                 setState(() {}); 
               },
               decoration: InputDecoration(
@@ -1468,13 +1615,13 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               style: const TextStyle(fontSize: 14), 
             ),
-            // LIVE-VORSCHAU FÜR DEUTSCH
+            // LIVE-ÜBERSETZUNG IN GRÜN DIREKT DARUNTER
             if (_noteController1.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6.0, left: 4.0),
                 child: Text(
                   "🇩🇪 ${_translateLive(_noteController1.text)}",
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             const SizedBox(height: 6),
@@ -1551,13 +1698,12 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               style: const TextStyle(fontSize: 14), 
             ),
-            // LIVE-VORSCHAU FÜR DEUTSCH
             if (_noteController2.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6.0, left: 4.0),
                 child: Text(
                   "🇩🇪 ${_translateLive(_noteController2.text)}",
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             const SizedBox(height: 6),
@@ -1634,13 +1780,12 @@ class _DataInputScreenState extends State<DataInputScreen> {
               ),
               style: const TextStyle(fontSize: 14), 
             ),
-            // LIVE-VORSCHAU FÜR DEUTSCH
             if (_noteController3.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6.0, left: 4.0),
                 child: Text(
                   "🇩🇪 ${_translateLive(_noteController3.text)}",
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             const SizedBox(height: 6),
