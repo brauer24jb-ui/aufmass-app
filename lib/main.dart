@@ -489,7 +489,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   Future<void>? _initializeControllerFuture;
   bool _isTakingPicture = false;
 
-  // Linsen-Verwaltung für das iPhone
   int _wideIndex = -1;
   int _ultraWideIndex = -1;
   int _teleIndex = -1;
@@ -506,8 +505,8 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   double _maxAvailableZoom = 1.0;
   
   double _currentDisplayZoom = 1.0;
-  double _baseZoomLevel = 1.0; // DIE WIEDER HERGESTELLTE VARIABLE
-  int _selectedZoomIndex = 5; // Startet bei 1.0 (Index 5 in der Liste)
+  double _baseZoomLevel = 1.0;
+  int _selectedZoomIndex = 5; 
 
   late FixedExtentScrollController _zoomScrollController;
   Timer? _lensSwitchTimer;
@@ -517,7 +516,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     super.initState();
     _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
 
-    // Kameras analysieren (iPhone hat Ultraweitwinkel, Weitwinkel, Tele)
     for (int i = 0; i < cameras.length; i++) {
       if (cameras[i].lensDirection == CameraLensDirection.back) {
         String name = cameras[i].name.toLowerCase();
@@ -531,7 +529,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       }
     }
 
-    // Fallback, falls die Namen anders sind
     if (_wideIndex == -1) {
       _wideIndex = cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
       if (_wideIndex == -1) _wideIndex = 0;
@@ -541,7 +538,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     _initCamera(_currentCameraIndex, 1.0);
   }
 
-  // Kamera mit berechnetem internen Zoom starten
   Future<void> _initCamera(int cameraIndex, double displayZoom) async {
     if (_controller != null) {
       await _controller!.dispose();
@@ -567,26 +563,27 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     if (mounted) setState(() {});
   }
 
-  // Übersetzt unseren "Display-Zoom" (z.B. 0.5) in den echten Zoom der jeweiligen Linse
   void _applyZoom(double displayZoom) {
     if (_controller == null) return;
 
     double internalZoom = displayZoom;
     if (_currentCameraIndex == _ultraWideIndex) {
-      // Bei Apple entspricht der interne 1.0x Zoom der Ultraweitwinkel-Linse den physischen 0.5x
       internalZoom = displayZoom * 2.0; 
     } else if (_currentCameraIndex == _wideIndex) {
       internalZoom = displayZoom;
     } else if (_currentCameraIndex == _teleIndex) {
-      // Tele fängt meist bei 3.0x physisch an
       internalZoom = displayZoom / 3.0; 
     }
 
+    // Sicherer Fallback: Wenn das Gerät z.B. 0.5 sperrt, bleibt es auf dem Minium (1.0)
     internalZoom = internalZoom.clamp(_minAvailableZoom, _maxAvailableZoom);
-    _controller!.setZoomLevel(internalZoom);
+    try {
+      _controller!.setZoomLevel(internalZoom);
+    } catch (e) {
+      debugPrint("Zoomfehler (Apple blockiert diese Stufe): $e");
+    }
   }
 
-  // Wird gefeuert, wenn das Rad gedreht wird
   void _onWheelChanged(int index) {
     setState(() {
       _selectedZoomIndex = index;
@@ -595,14 +592,12 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
     _applyZoom(_currentDisplayZoom);
 
-    // Verhindert Stottern: Linse wechselt erst, wenn man aufhört zu wischen
     _lensSwitchTimer?.cancel();
     _lensSwitchTimer = Timer(const Duration(milliseconds: 300), () {
       _evaluateLensSwitch(_currentDisplayZoom);
     });
   }
 
-  // Prüft, ob wir physisch die Linse wechseln müssen (z.B. auf 0.5x Ultraweitwinkel)
   void _evaluateLensSwitch(double displayZoom) {
     int targetLens = _wideIndex;
 
@@ -612,13 +607,11 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       targetLens = _teleIndex;
     }
 
-    // Nur neu laden, wenn es wirklich eine andere Linse ist
     if (targetLens != _currentCameraIndex) {
       _initCamera(targetLens, displayZoom);
     }
   }
 
-  // Schnellsprung über die iOS Buttons (0.5, 1, 2)
   void _jumpToZoom(double targetZoom) {
     int idx = _availableZoomLevels.indexOf(targetZoom);
     if (idx == -1) return;
@@ -715,7 +708,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                       },
                       onScaleUpdate: (details) async {
                         double zoom = _baseZoomLevel * details.scale;
-                        // Limit overall zoom from 0.5 to 15.0
                         zoom = zoom.clamp(0.5, 15.0);
                         
                         int closestIndex = 0;
@@ -738,14 +730,13 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   ),
 
                   // ==========================
-                  // NEUES IOS ZOOM-RAD (EDEL & FEIN)
+                  // REPARIERTES ZOOM-RAD (Kein Zeilenumbruch mehr!)
                   // ==========================
                   Positioned(
                     bottom: 120, 
                     left: 0,
                     right: 0,
                     child: ShaderMask(
-                      // Dies erzeugt den eleganten Ausblend-Effekt links und rechts
                       shaderCallback: (Rect bounds) {
                         return const LinearGradient(
                           begin: Alignment.centerLeft,
@@ -761,9 +752,9 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                           quarterTurns: -1, 
                           child: ListWheelScrollView.useDelegate(
                             controller: _zoomScrollController,
-                            itemExtent: 22, // Sehr nah beieinander
+                            itemExtent: 22, 
                             physics: const FixedExtentScrollPhysics(), 
-                            perspective: 0.001, // Sehr flacher Winkel
+                            perspective: 0.001, 
                             diameterRatio: 3.0, 
                             onSelectedItemChanged: _onWheelChanged,
                             childDelegate: ListWheelChildBuilderDelegate(
@@ -775,16 +766,26 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
                                 Widget content;
                                 if (isMainLabel) {
-                                  // Hauptstriche (z.B. 0.5, 1, 2) mit Text darüber
                                   content = Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
-                                        style: TextStyle(
-                                          color: isSelected ? Colors.yellow : Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: isSelected ? 16 : 14,
+                                      // DIE OVERFLOWBOX: Zwingt den Text in eine einzige Zeile (Löst das Problem)
+                                      SizedBox(
+                                        height: 20,
+                                        child: OverflowBox(
+                                          maxWidth: 80, // Genug Platz in der Breite
+                                          child: Center(
+                                            child: Text(
+                                              zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
+                                              style: TextStyle(
+                                                color: isSelected ? Colors.yellow : Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: isSelected ? 15 : 13,
+                                              ),
+                                              maxLines: 1,
+                                              softWrap: false, // Verhindert Zeilenumbruch
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -796,11 +797,10 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                                     ],
                                   );
                                 } else {
-                                  // Feine Zwischenstriche (ohne Zahl)
                                   content = Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const SizedBox(height: 24), // Schiebt den Strich nach unten auf eine Linie
+                                      const SizedBox(height: 24), 
                                       Container(
                                         width: 1.0,
                                         height: 10,
@@ -825,11 +825,8 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ),
 
-                  // ==========================
-                  // DIE SCHNELL-WAHL BUTTONS WIE BEI APPLE
-                  // ==========================
                   Positioned(
-                    bottom: 200, // Direkt über dem Rad
+                    bottom: 200, 
                     left: 0,
                     right: 0,
                     child: Row(
@@ -843,7 +840,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ),
 
-                  // AUSLÖSER-BUTTON
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
