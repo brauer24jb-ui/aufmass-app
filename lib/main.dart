@@ -486,8 +486,11 @@ class CustomCameraScreen extends StatefulWidget {
 
 class _CustomCameraScreenState extends State<CustomCameraScreen> {
   CameraController? _controller;
-  Future<void>? _initializeControllerFuture;
   bool _isTakingPicture = false;
+  
+  // Status-Variablen für das fließende Umschalten
+  bool _isCameraReady = false;
+  bool _isSwitchingLens = false;
 
   int _wideIndex = -1;
   int _ultraWideIndex = -1;
@@ -516,14 +519,12 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     super.initState();
     _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
 
-    // HIER IST DAS NEUE FALLBACK-SYSTEM FÜR DIE LINSEN
     List<int> backCams = [];
     for (int i = 0; i < cameras.length; i++) {
       if (cameras[i].lensDirection == CameraLensDirection.back) {
         backCams.add(i);
         String name = cameras[i].name.toLowerCase();
         
-        // Versuch 1: Namen-Analyse (inklusive deutscher Begriffe)
         if (name.contains('ultra') || name.contains('0.5') || name.contains('0,5')) {
           _ultraWideIndex = i;
         } else if (name.contains('tele')) {
@@ -534,19 +535,15 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       }
     }
 
-    // Versuch 2: Hartes Fallback, falls Apple die Namen versteckt (passiert oft auf deutschen Geräten)
     if (_ultraWideIndex == -1 && backCams.length > 1) {
       if (backCams.length == 3) {
-        // Bei 3 Kameras ist es fast immer: Wide, Tele, Ultra
         _teleIndex = backCams[1];
         _ultraWideIndex = backCams[2];
       } else if (backCams.length == 2) {
-        // Bei 2 Kameras: Wide, Ultra
         _ultraWideIndex = backCams[1];
       }
     }
 
-    // Falls immer noch nichts gefunden, Standardkamera nehmen
     if (_wideIndex == -1) {
       _wideIndex = backCams.isNotEmpty ? backCams[0] : 0;
     }
@@ -555,6 +552,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     _initCamera(_currentCameraIndex, 1.0);
   }
 
+  // Überarbeitete Kamera-Initialisierung OHNE FutureBuilder (verhindert das Verschwinden der UI)
   Future<void> _initCamera(int cameraIndex, double displayZoom) async {
     if (_controller != null) {
       await _controller!.dispose();
@@ -566,26 +564,33 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       enableAudio: false,
     );
 
-    _initializeControllerFuture = _controller!.initialize().then((_) async {
+    try {
+      await _controller!.initialize();
       if (!mounted) return;
+      
       _maxAvailableZoom = await _controller!.getMaxZoomLevel();
       _minAvailableZoom = await _controller!.getMinZoomLevel();
       
       _currentCameraIndex = cameraIndex;
       _applyZoom(displayZoom);
 
-      if (mounted) setState(() {});
-    });
-
-    if (mounted) setState(() {});
+      // Kamera ist bereit, Blende kann wieder hochfahren
+      if (mounted) {
+        setState(() {
+          _isCameraReady = true;
+          _isSwitchingLens = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Kamera konnte nicht geladen werden: $e");
+    }
   }
 
   void _applyZoom(double displayZoom) {
-    if (_controller == null) return;
+    if (_controller == null || !_isCameraReady) return;
 
     double internalZoom = displayZoom;
     if (_currentCameraIndex == _ultraWideIndex) {
-      // 0.5x UI bedeutet auf der Ultralinse intern 1.0x
       internalZoom = displayZoom * 2.0; 
     } else if (_currentCameraIndex == _wideIndex) {
       internalZoom = displayZoom;
@@ -593,7 +598,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       internalZoom = displayZoom / 3.0; 
     }
 
-    // Klemmen, damit Apple die App nicht abstürzen lässt
     internalZoom = internalZoom.clamp(_minAvailableZoom, _maxAvailableZoom);
     try {
       _controller!.setZoomLevel(internalZoom);
@@ -610,14 +614,14 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
     _applyZoom(_currentDisplayZoom);
 
-    // Stottern verhindern: Linse wechselt erst, wenn Rad stoppt
     _lensSwitchTimer?.cancel();
     _lensSwitchTimer = Timer(const Duration(milliseconds: 250), () {
       _evaluateLensSwitch(_currentDisplayZoom);
     });
   }
 
-  void _evaluateLensSwitch(double displayZoom) {
+  // Steuert die Crossfade-Blende beim Linsenwechsel
+  void _evaluateLensSwitch(double displayZoom) async {
     int targetLens = _currentCameraIndex;
 
     if (displayZoom < 1.0 && _ultraWideIndex != -1) {
@@ -629,7 +633,9 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     }
 
     if (targetLens != _currentCameraIndex) {
-      _initCamera(targetLens, displayZoom);
+      // Zeige die schwarze Blende (Fade out)
+      setState(() { _isSwitchingLens = true; });
+      await _initCamera(targetLens, displayZoom);
     }
   }
 
@@ -646,13 +652,12 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   }
 
   Future<void> _takePictureAndGo() async {
-    if (_isTakingPicture || _controller == null) return;
+    if (_isTakingPicture || _controller == null || !_isCameraReady) return;
 
     try {
       setState(() {
         _isTakingPicture = true;
       });
-      await _initializeControllerFuture;
       
       final image = await _controller!.takePicture();
       
@@ -716,14 +721,13 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: FutureBuilder<void>(
-          future: _initializeControllerFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done && _controller != null) {
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: GestureDetector(
+        // FutureBuilder WURDE ENTFERNT. Die UI bleibt jetzt immer starr und stabil stehen!
+        child: Stack(
+          children: [
+            // 1. Das eigentliche Kamera-Bild
+            Positioned.fill(
+              child: (_isCameraReady && _controller != null && _controller!.value.isInitialized)
+                  ? GestureDetector(
                       onScaleStart: (details) {
                         _baseZoomLevel = _currentDisplayZoom;
                       },
@@ -747,156 +751,163 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                         }
                       },
                       child: CameraPreview(_controller!),
-                    ),
-                  ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
 
-                  // ==========================
-                  // REPARIERTES ZOOM-RAD (Kein Zeilenumbruch mehr!)
-                  // ==========================
-                  Positioned(
-                    bottom: 120, 
-                    left: 0,
-                    right: 0,
-                    child: ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
-                          stops: [0.0, 0.4, 0.6, 1.0],
-                        ).createShader(bounds);
-                      },
-                      blendMode: BlendMode.dstIn,
-                      child: SizedBox(
-                        height: 70, 
-                        child: RotatedBox(
-                          quarterTurns: -1, 
-                          child: ListWheelScrollView.useDelegate(
-                            controller: _zoomScrollController,
-                            itemExtent: 22, 
-                            physics: const FixedExtentScrollPhysics(), 
-                            perspective: 0.001, 
-                            diameterRatio: 3.0, 
-                            onSelectedItemChanged: _onWheelChanged,
-                            childDelegate: ListWheelChildBuilderDelegate(
-                              childCount: _availableZoomLevels.length,
-                              builder: (context, index) {
-                                double zoomValue = _availableZoomLevels[index];
-                                bool isSelected = index == _selectedZoomIndex;
-                                bool isMainLabel = zoomValue % 1 == 0 || zoomValue == 0.5;
+            // 2. DIE WEICHE BLENDE (Versteckt das Flackern des Sensors beim Umschalten)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: _isSwitchingLens || !_isCameraReady ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 250), // Sanfter Übergang
+                  child: Container(color: Colors.black),
+                ),
+              ),
+            ),
 
-                                Widget content;
-                                if (isMainLabel) {
-                                  content = Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // DIE OVERFLOWBOX: Zwingt den Text in eine einzige Zeile (Löst das Problem)
-                                      SizedBox(
-                                        height: 20,
-                                        child: OverflowBox(
-                                          maxWidth: 120, // Genug Platz in der Breite
-                                          maxHeight: 50,
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
-                                            style: TextStyle(
-                                              color: isSelected ? Colors.yellow : Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: isSelected ? 15 : 13,
-                                            ),
-                                            maxLines: 1,
-                                            softWrap: false, // Verhindert Zeilenumbruch radikal
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        width: 1.5,
-                                        height: 18,
-                                        color: isSelected ? Colors.yellow : Colors.white,
-                                      ),
-                                    ],
-                                  );
-                                } else {
-                                  content = Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const SizedBox(height: 24), 
-                                      Container(
-                                        width: 1.0,
-                                        height: 10,
-                                        color: Colors.white54,
-                                      ),
-                                    ],
-                                  );
-                                }
+            // 3. Zoom-Rad (Verschwindet ab jetzt nicht mehr beim Linsenwechsel!)
+            Positioned(
+              bottom: 120, 
+              left: 0,
+              right: 0,
+              child: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
+                    stops: [0.0, 0.4, 0.6, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: SizedBox(
+                  height: 70, 
+                  child: RotatedBox(
+                    quarterTurns: -1, 
+                    child: ListWheelScrollView.useDelegate(
+                      controller: _zoomScrollController,
+                      itemExtent: 22, 
+                      physics: const FixedExtentScrollPhysics(), 
+                      perspective: 0.001, 
+                      diameterRatio: 3.0, 
+                      onSelectedItemChanged: _onWheelChanged,
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: _availableZoomLevels.length,
+                        builder: (context, index) {
+                          double zoomValue = _availableZoomLevels[index];
+                          bool isSelected = index == _selectedZoomIndex;
+                          bool isMainLabel = zoomValue % 1 == 0 || zoomValue == 0.5;
 
-                                return RotatedBox(
-                                  quarterTurns: 1, 
-                                  child: Container(
+                          Widget content;
+                          if (isMainLabel) {
+                            content = Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  height: 20,
+                                  child: OverflowBox(
+                                    maxWidth: 120, 
+                                    maxHeight: 50,
                                     alignment: Alignment.center,
-                                    child: content,
+                                    child: Text(
+                                      zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.yellow : Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: isSelected ? 15 : 13,
+                                      ),
+                                      maxLines: 1,
+                                      softWrap: false, 
+                                    ),
                                   ),
-                                );
-                              },
+                                ),
+                                const SizedBox(height: 4),
+                                Container(
+                                  width: 1.5,
+                                  height: 18,
+                                  color: isSelected ? Colors.yellow : Colors.white,
+                                ),
+                              ],
+                            );
+                          } else {
+                            content = Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 24), 
+                                Container(
+                                  width: 1.0,
+                                  height: 10,
+                                  color: Colors.white54,
+                                ),
+                              ],
+                            );
+                          }
+
+                          return RotatedBox(
+                            quarterTurns: 1, 
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: content,
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
 
-                  Positioned(
-                    bottom: 200, 
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_ultraWideIndex != -1) _buildQuickJumpButton(0.5, "0,5"),
-                        _buildQuickJumpButton(1.0, "1"),
-                        _buildQuickJumpButton(2.0, "2"),
-                        if (_teleIndex != -1) _buildQuickJumpButton(3.0, "3"),
-                      ],
-                    ),
-                  ),
-
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 30.0),
-                      child: GestureDetector(
-                        onTap: _takePictureAndGo,
-                        child: Container(
-                          height: 80,
-                          width: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.8),
-                            border: Border.all(color: Colors.white, width: 4),
-                          ),
-                          child: _isTakingPicture 
-                              ? const Center(child: CircularProgressIndicator()) 
-                              : const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
+            // 4. Schnellwahl-Buttons
+            Positioned(
+              bottom: 200, 
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_ultraWideIndex != -1) _buildQuickJumpButton(0.5, "0,5"),
+                  _buildQuickJumpButton(1.0, "1"),
+                  _buildQuickJumpButton(2.0, "2"),
+                  if (_teleIndex != -1) _buildQuickJumpButton(3.0, "3"),
                 ],
-              );
-            } else {
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
-            }
-          },
+              ),
+            ),
+
+            // 5. Auslöser-Button
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 30.0),
+                child: GestureDetector(
+                  onTap: _takePictureAndGo,
+                  child: Container(
+                    height: 80,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.8),
+                      border: Border.all(color: Colors.white, width: 4),
+                    ),
+                    child: _isTakingPicture 
+                        ? const Center(child: CircularProgressIndicator()) 
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+            
+            // 6. Zurück-Button
+            Positioned(
+              top: 10,
+              left: 10,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
