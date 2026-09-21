@@ -77,45 +77,89 @@ final Map<String, Term> toolTerms = {
   'Standort': const Term(ru: 'Адрес', uk: 'Адреса', de: 'Standort'),
 };
 
-// 1. Versorger
+// ==========================================
+// MEGA-WÖRTERBUCH: TIEFBAU, GALABAU, STRASSENBAU
+// ==========================================
+
+// 1. Versorger / Leitungen
 final List<Term> versorgerTerms = [
   const Term(ru: 'Вода', uk: 'Вода', de: 'Wasser'),
   const Term(ru: 'Газ', uk: 'Газ', de: 'Gas'),
   const Term(ru: 'Электричество', uk: 'Електрика', de: 'Strom'),
+  const Term(ru: 'Телекоммуникации', uk: 'Телекомунікації', de: 'Telekom'),
+  const Term(ru: 'Оптоволокно', uk: 'Оптоволокно', de: 'Glasfaser'),
+  const Term(ru: 'Канализация', uk: 'Каналізація', de: 'Abwasser'),
+  const Term(ru: 'Дождевая вода', uk: 'Дощова вода', de: 'Regenwasser'),
+  const Term(ru: 'Смешанная вода', uk: 'Змішана вода', de: 'Mischwasser'),
 ];
 
-// 2. Material
+// 2. Material (massiv erweitert)
 final List<Term> materialTerms = [
   const Term(ru: 'Асфальт', uk: 'Асфальт', de: 'Asphalt'),
+  const Term(ru: 'Битум', uk: 'Бітум', de: 'Bitumen'),
   const Term(ru: 'Бетонная плитка', uk: 'Бетонна плитка', de: 'Betonsteinpflaster'),
-  const Term(ru: 'Бетонный щебень', uk: 'Бетонний щебінь', de: 'Betonschotter'),
-  const Term(ru: 'Бордюр', uk: 'Бордюр', de: 'Bordstein'),
-  const Term(ru: 'Дробленый песок', uk: 'Дроблений пісок', de: 'Brechsand'),
-  const Term(ru: 'Грунт', uk: 'Ґрунт', de: 'Boden'),
-  const Term(ru: 'Кабель', uk: 'Кабель', de: 'Kabel'),
   const Term(ru: 'Клинкер', uk: 'Клінкер', de: 'Klinkerpflaster'),
-  const Term(ru: 'Колодец', uk: 'Колодязь', de: 'Schacht'),
-  const Term(ru: 'Лоток', uk: 'Жолоб', de: 'Rinne'),
+  const Term(ru: 'Природный камень', uk: 'Природний камінь', de: 'Natursteinpflaster'),
+  const Term(ru: 'Бетонный щебень', uk: 'Бетонний щебінь', de: 'Betonschotter'),
+  const Term(ru: 'Природный щебень', uk: 'Природний щебінь', de: 'Naturschotter'),
   const Term(ru: 'Минеральная смесь', uk: 'Мінеральна суміш', de: 'Mineralgemisch'),
-  const Term(ru: 'Трубы KG', uk: 'Труби KG', de: 'KG Rohre'),
-  const Term(ru: 'Трубы KG 2000', uk: 'Труби KG 2000', de: 'KG 2000 Rohre'),
-  const Term(ru: 'Узловая брусчатка', uk: 'Замкова бруківка', de: 'Verbundsteinpflaster'),
+  const Term(ru: 'Защитный слой от мороза', uk: 'Морозозахисний шар', de: 'Frostschutzschicht'),
+  const Term(ru: 'Дробленый песок', uk: 'Дроблений пісок', de: 'Brechsand'),
   const Term(ru: 'Засыпной песок', uk: 'Засипний пісок', de: 'Füllsand'),
+  const Term(ru: 'Чернозем', uk: 'Чорнозем', de: 'Mutterboden'),
+  const Term(ru: 'Грунт', uk: 'Ґрунт', de: 'Boden'),
+  const Term(ru: 'Земля', uk: 'Земля', de: 'Erde'),
+  const Term(ru: 'Бордюр', uk: 'Бордюр', de: 'Bordstein'),
+  const Term(ru: 'Желоб', uk: 'Жолоб', de: 'Rinne'),
+  const Term(ru: 'Г-образный камень', uk: 'Г-подібний блок', de: 'L-Stein'),
+  const Term(ru: 'Колодец', uk: 'Колодязь', de: 'Schacht'),
+  const Term(ru: 'Трубы KG', uk: 'Труби KG', de: 'KG Rohre'),
+  const Term(ru: 'Кабельная труба', uk: 'Кабельна труба', de: 'Kabelschutzrohr'),
+  const Term(ru: 'Бетон', uk: 'Бетон', de: 'Beton'),
+  const Term(ru: 'Цемент', uk: 'Цемент', de: 'Zement'),
+  const Term(ru: 'Щебень', uk: 'Щебінь', de: 'Schotter'),
+  const Term(ru: 'Гравий', uk: 'Гравій', de: 'Kies'),
+  const Term(ru: 'Раствор', uk: 'Розчин', de: 'Mörtel'),
+  const Term(ru: 'Кабель', uk: 'Кабель', de: 'Kabel'),
 ];
 
-// 3. Tätigkeit
+// 3. Tätigkeit / Maschinen (massiv erweitert)
 final List<Term> taetigkeitTerms = [
   const Term(ru: 'Установлено', uk: 'Встановлено', de: 'gesetzt'),
+  const Term(ru: 'Уложено', uk: 'Покладено', de: 'verlegt'),
+  const Term(ru: 'Встроено', uk: 'Вмонтовано', de: 'eingebaut'),
+  const Term(ru: 'Забетонировано', uk: 'Забетоновано', de: 'betoniert'),
+  const Term(ru: 'Заасфальтировано', uk: 'Заасфальтовано', de: 'asphaltiert'),
+  const Term(ru: 'Уплотнено', uk: 'Ущільнено', de: 'verdichtet'),
+  const Term(ru: 'Демонтировано', uk: 'Демонтовано', de: 'aufgenommen'),
+  const Term(ru: 'Снесено', uk: 'Знесено', de: 'abgebrochen'),
+  const Term(ru: 'Отфрезеровано', uk: 'Відфрезеровано', de: 'gefräst'),
+  const Term(ru: 'Отрезано', uk: 'Відрізано', de: 'geschnitten'),
+  const Term(ru: 'Выемка грунта', uk: 'Виїмка ґрунту', de: 'Aushub'),
   const Term(ru: 'Экскаватор', uk: 'Екскаватор', de: 'Bagger'),
   const Term(ru: 'Погрузчик', uk: 'Навантажувач', de: 'Radlader'),
+  const Term(ru: 'Виброплита', uk: 'Віброплита', de: 'Rüttelplatte'),
+  const Term(ru: 'Вибротрамбовка', uk: 'Вібротрамбовка', de: 'Stampfer'),
+  const Term(ru: 'Каток', uk: 'Коток', de: 'Walze'),
+  const Term(ru: 'Грузовик', uk: 'Вантажівка', de: 'LKW'),
+  const Term(ru: 'Кран', uk: 'Кран', de: 'Kran'),
   const Term(ru: 'Насос', uk: 'Насос', de: 'Pumpe'),
   const Term(ru: 'Часы', uk: 'Години', de: 'Stunden'),
-  const Term(ru: 'Демонтировано', uk: 'Демонтовано', de: 'aufgenommen'),
-  const Term(ru: 'Колодец/Яма', uk: 'Котлован/Яма', de: 'Grube'),
-  const Term(ru: 'Почасовая оплата', uk: 'Погодинна оплата', de: 'Stundenlohn'),
+  const Term(ru: 'Паушально', uk: 'Паушально', de: 'Pauschal'),
   const Term(ru: 'Траншея', uk: 'Траншея', de: 'Graben'),
-  const Term(ru: 'Уложено', uk: 'Покладено', de: 'verlegt'),
+  const Term(ru: 'Яма', uk: 'Яма', de: 'Grube'),
   const Term(ru: 'Шурф', uk: 'Шурф', de: 'Suchschachtung'),
+  const Term(ru: 'Планум', uk: 'Планум', de: 'Planum'),
+  const Term(ru: 'Сломан', uk: 'Зламаний', de: 'defekt'),
+  const Term(ru: 'Новый', uk: 'Новий', de: 'neu'),
+  const Term(ru: 'Старый', uk: 'Старий', de: 'alt'),
+];
+
+// Kombiniertes Dictionary für die automatische Live-Übersetzung
+final List<Term> allDictionaryTerms = [
+  ...versorgerTerms,
+  ...materialTerms,
+  ...taetigkeitTerms,
 ];
 
 final Term backTerm = const Term(ru: 'Назад', uk: 'Назад', de: 'Zurück');
@@ -215,7 +259,7 @@ String get uiSelect2 {
   return '2. Выбор материала (2. Auswahl Material)';
 }
 String get uiSelect3 {
-  if (globalAppLang == AppLang.ukDe) return '3. Вибір діяльності (3. Auswahl Tätigkeit)';
+  if (globalAppLang == AppLang.ukDe) return '3. Вибір деятельности (3. Auswahl Tätigkeit)';
   if (globalAppLang == AppLang.ruUk) return '3. Выбор діяльності (3. Діяльність)';
   if (globalAppLang == AppLang.de) return '3. Auswahl (Tätigkeit)';
   return '3. Выбор деятельности (3. Auswahl Tätigkeit)';
@@ -549,7 +593,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     _initCamera(_currentCameraIndex, 1.0);
   }
 
-  // ROHE INITIALISIERUNG OHNE KÜNSTLICHE VERZÖGERUNGEN
   Future<void> _initCamera(int cameraIndex, double displayZoom) async {
     if (_controller != null) {
       await _controller!.dispose();
@@ -625,7 +668,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     }
 
     if (targetLens != _currentCameraIndex) {
-      // Roher Wechsel ohne SetState für Blenden
       _initCamera(targetLens, displayZoom);
     }
   }
@@ -714,7 +756,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // 1. Das eigentliche Kamera-Bild
             Positioned.fill(
               child: (_controller != null && _controller!.value.isInitialized)
                   ? GestureDetector(
@@ -745,7 +786,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   : const SizedBox.shrink(),
             ),
 
-            // 2. Zoom-Rad (Stabile UI, verschwindet beim Wechsel nicht)
             Positioned(
               bottom: 120, 
               left: 0,
@@ -838,7 +878,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
 
-            // 3. Schnellwahl-Buttons
             Positioned(
               bottom: 200, 
               left: 0,
@@ -854,7 +893,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
 
-            // 4. Auslöser-Button
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -877,7 +915,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
             
-            // 5. Zurück-Button
             Positioned(
               top: 10,
               left: 10,
@@ -1291,9 +1328,9 @@ class _DataInputScreenState extends State<DataInputScreen> {
     _noteController3 = TextEditingController(text: widget.note3);
     _addressController = TextEditingController(text: widget.address);
 
-    _versorgerOptionsMap = { for (var t in versorgerTerms) t.dropdownLabel : t.outputLang };
-    _materialOptionsMap = { for (var t in materialTerms) t.dropdownLabel : t.outputLang };
-    _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.dropdownLabel : t.outputLang };
+    _versorgerOptionsMap = { for (var t in versorgerTerms) t.dropdownLabel : t.sourceLang };
+    _materialOptionsMap = { for (var t in materialTerms) t.dropdownLabel : t.sourceLang };
+    _taetigkeitOptionsMap = { for (var t in taetigkeitTerms) t.dropdownLabel : t.sourceLang };
   }
 
   @override
@@ -1308,14 +1345,34 @@ class _DataInputScreenState extends State<DataInputScreen> {
     super.dispose();
   }
 
+  // ==========================================
+  // HIER ARBEITET DAS OFFLINE-WÖRTERBUCH
+  // ==========================================
+  String _translateLive(String input) {
+    if (input.trim().isEmpty) return '';
+    String result = input;
+    
+    // Wir sortieren nach Länge (lange Wörter zuerst ersetzen)
+    List<Term> sortedTerms = List.from(allDictionaryTerms);
+    sortedTerms.sort((a, b) => b.ru.length.compareTo(a.ru.length));
+
+    for (var term in sortedTerms) {
+      // Sucht im Text nach dem russischen oder ukrainischen Wort (egal ob groß/klein)
+      result = result.replaceAll(RegExp(term.ru, caseSensitive: false), term.de);
+      result = result.replaceAll(RegExp(term.uk, caseSensitive: false), term.de);
+    }
+    return result;
+  }
+
   void _saveAndReturn() {
     Navigator.pop(context, {
       'length': _lengthController.text,
       'width': _widthController.text,
       'depth': _depthController.text,
-      'note1': _noteController1.text,
-      'note2': _noteController2.text,
-      'note3': _noteController3.text,
+      // HIER landet auf dem Bild NUR die übersetzte, deutsche Version!
+      'note1': _translateLive(_noteController1.text),
+      'note2': _translateLive(_noteController2.text),
+      'note3': _translateLive(_noteController3.text),
       'address': _addressController.text,
     });
   }
@@ -1384,8 +1441,15 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const Divider(height: 32, thickness: 2),
 
+            // =========================
+            // BLOCK 1 (Versorger)
+            // =========================
             TextField(
               controller: _noteController1,
+              onChanged: (val) {
+                // Löst ein Live-Update für die deutsche Übersetzung darunter aus
+                setState(() {}); 
+              },
               decoration: InputDecoration(
                 labelText: uiNote1,
                 labelStyle: const TextStyle(fontSize: 13), 
@@ -1396,11 +1460,23 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 16, color: Colors.red),
-                  onPressed: () => _noteController1.clear(),
+                  onPressed: () {
+                    _noteController1.clear();
+                    setState(() {});
+                  },
                 ),
               ),
               style: const TextStyle(fontSize: 14), 
             ),
+            // LIVE-VORSCHAU FÜR DEUTSCH
+            if (_noteController1.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0, left: 4.0),
+                child: Text(
+                  "🇩🇪 ${_translateLive(_noteController1.text)}",
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
@@ -1449,8 +1525,14 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 20),
 
+            // =========================
+            // BLOCK 2 (Material)
+            // =========================
             TextField(
               controller: _noteController2,
+              onChanged: (val) {
+                setState(() {}); 
+              },
               decoration: InputDecoration(
                 labelText: uiNote2,
                 labelStyle: const TextStyle(fontSize: 13), 
@@ -1461,11 +1543,23 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 16, color: Colors.red),
-                  onPressed: () => _noteController2.clear(),
+                  onPressed: () {
+                    _noteController2.clear();
+                    setState(() {});
+                  },
                 ),
               ),
               style: const TextStyle(fontSize: 14), 
             ),
+            // LIVE-VORSCHAU FÜR DEUTSCH
+            if (_noteController2.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0, left: 4.0),
+                child: Text(
+                  "🇩🇪 ${_translateLive(_noteController2.text)}",
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
@@ -1514,8 +1608,14 @@ class _DataInputScreenState extends State<DataInputScreen> {
             ),
             const SizedBox(height: 20),
 
+            // =========================
+            // BLOCK 3 (Tätigkeit)
+            // =========================
             TextField(
               controller: _noteController3,
+              onChanged: (val) {
+                setState(() {}); 
+              },
               decoration: InputDecoration(
                 labelText: uiNote3,
                 labelStyle: const TextStyle(fontSize: 13), 
@@ -1526,11 +1626,23 @@ class _DataInputScreenState extends State<DataInputScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 16, color: Colors.red),
-                  onPressed: () => _noteController3.clear(),
+                  onPressed: () {
+                    _noteController3.clear();
+                    setState(() {});
+                  },
                 ),
               ),
               style: const TextStyle(fontSize: 14), 
             ),
+            // LIVE-VORSCHAU FÜR DEUTSCH
+            if (_noteController3.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0, left: 4.0),
+                child: Text(
+                  "🇩🇪 ${_translateLive(_noteController3.text)}",
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
             const SizedBox(height: 6),
             InputDecorator(
               decoration: InputDecoration(
