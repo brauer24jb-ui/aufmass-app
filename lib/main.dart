@@ -9,6 +9,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'dart:async'; // WICHTIG für den Linsen-Wechsel-Timer
 
 // Globale Liste für die verfügbaren Kameras
 List<CameraDescription> cameras = [];
@@ -473,7 +474,7 @@ class _StartScreenState extends State<StartScreen> {
 }
 
 // ==========================================
-// SEITE 1.5: Eigene Live-Kamera MIT LINSENWECHSEL
+// SEITE 1.5: KAMERA MIT NATIVEM IOS ZOOM & LINSENWECHSEL
 // ==========================================
 class CustomCameraScreen extends StatefulWidget {
   final String defaultAddress;
@@ -487,11 +488,15 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
   bool _isTakingPicture = false;
-  
+
+  // Linsen-Verwaltung für das iPhone
+  int _wideIndex = -1;
+  int _ultraWideIndex = -1;
+  int _teleIndex = -1;
   int _currentCameraIndex = 0;
 
   final List<double> _availableZoomLevels = [
-    0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
+    0.5, 0.6, 0.7, 0.8, 0.9, 
     1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 
     2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 
     3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0
@@ -499,28 +504,44 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
-  double _currentZoomLevel = 1.0;
-  double _baseZoomLevel = 1.0;
+  
+  double _currentDisplayZoom = 1.0;
+  int _selectedZoomIndex = 5; // Startet bei 1.0 (Index 5 in der Liste)
 
-  int _selectedZoomIndex = 9; 
   late FixedExtentScrollController _zoomScrollController;
+  Timer? _lensSwitchTimer;
 
   @override
   void initState() {
     super.initState();
     _zoomScrollController = FixedExtentScrollController(initialItem: _selectedZoomIndex);
-    
+
+    // Kameras analysieren (iPhone hat Ultraweitwinkel, Weitwinkel, Tele)
     for (int i = 0; i < cameras.length; i++) {
       if (cameras[i].lensDirection == CameraLensDirection.back) {
-        _currentCameraIndex = i;
-        break;
+        String name = cameras[i].name.toLowerCase();
+        if (name.contains('ultra wide') || name.contains('ultrawide') || name.contains('0.5')) {
+          _ultraWideIndex = i;
+        } else if (name.contains('tele') || name.contains('telephoto')) {
+          _teleIndex = i;
+        } else if (_wideIndex == -1) {
+          _wideIndex = i;
+        }
       }
     }
-    
-    _initCamera(_currentCameraIndex);
+
+    // Fallback, falls die Namen anders sind
+    if (_wideIndex == -1) {
+      _wideIndex = cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+      if (_wideIndex == -1) _wideIndex = 0;
+    }
+
+    _currentCameraIndex = _wideIndex;
+    _initCamera(_currentCameraIndex, 1.0);
   }
 
-  Future<void> _initCamera(int cameraIndex) async {
+  // Kamera mit berechnetem internen Zoom starten
+  Future<void> _initCamera(int cameraIndex, double displayZoom) async {
     if (_controller != null) {
       await _controller!.dispose();
     }
@@ -536,46 +557,82 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       _maxAvailableZoom = await _controller!.getMaxZoomLevel();
       _minAvailableZoom = await _controller!.getMinZoomLevel();
       
-      setState(() {
-        _currentZoomLevel = _minAvailableZoom < 1.0 ? 1.0 : _minAvailableZoom;
-        
-        int closestIndex = 0;
-        double minDiff = double.infinity;
-        for(int i = 0; i < _availableZoomLevels.length; i++) {
-          double diff = (_currentZoomLevel - _availableZoomLevels[i]).abs();
-          if(diff < minDiff) {
-            minDiff = diff;
-            closestIndex = i;
-          }
-        }
-        _selectedZoomIndex = closestIndex;
-        _zoomScrollController.jumpToItem(closestIndex);
-      });
+      _currentCameraIndex = cameraIndex;
+      _applyZoom(displayZoom);
+
+      if (mounted) setState(() {});
     });
 
     if (mounted) setState(() {});
   }
 
-  Future<void> _toggleCameraLens() async {
-    List<int> backCameras = [];
-    for (int i = 0; i < cameras.length; i++) {
-      if (cameras[i].lensDirection == CameraLensDirection.back) {
-        backCameras.add(i);
-      }
+  // Übersetzt unseren "Display-Zoom" (z.B. 0.5) in den echten Zoom der jeweiligen Linse
+  void _applyZoom(double displayZoom) {
+    if (_controller == null) return;
+
+    double internalZoom = displayZoom;
+    if (_currentCameraIndex == _ultraWideIndex) {
+      // Bei Apple entspricht der interne 1.0x Zoom der Ultraweitwinkel-Linse den physischen 0.5x
+      internalZoom = displayZoom * 2.0; 
+    } else if (_currentCameraIndex == _wideIndex) {
+      internalZoom = displayZoom;
+    } else if (_currentCameraIndex == _teleIndex) {
+      // Tele fängt meist bei 3.0x physisch an
+      internalZoom = displayZoom / 3.0; 
     }
 
-    if (backCameras.length > 1) {
-      int currentIndex = backCameras.indexOf(_currentCameraIndex);
-      int nextIndex = (currentIndex + 1) % backCameras.length;
-      await _initCamera(backCameras[nextIndex]);
-    } else {
-      int nextIndex = (_currentCameraIndex + 1) % cameras.length;
-      await _initCamera(nextIndex);
+    internalZoom = internalZoom.clamp(_minAvailableZoom, _maxAvailableZoom);
+    _controller!.setZoomLevel(internalZoom);
+  }
+
+  // Wird gefeuert, wenn das Rad gedreht wird
+  void _onWheelChanged(int index) {
+    setState(() {
+      _selectedZoomIndex = index;
+      _currentDisplayZoom = _availableZoomLevels[index];
+    });
+
+    _applyZoom(_currentDisplayZoom);
+
+    // Verhindert Stottern: Linse wechselt erst, wenn man aufhört zu wischen
+    _lensSwitchTimer?.cancel();
+    _lensSwitchTimer = Timer(const Duration(milliseconds: 300), () {
+      _evaluateLensSwitch(_currentDisplayZoom);
+    });
+  }
+
+  // Prüft, ob wir physisch die Linse wechseln müssen (z.B. auf 0.5x Ultraweitwinkel)
+  void _evaluateLensSwitch(double displayZoom) {
+    int targetLens = _wideIndex;
+
+    if (displayZoom < 1.0 && _ultraWideIndex != -1) {
+      targetLens = _ultraWideIndex;
+    } else if (displayZoom >= 3.0 && _teleIndex != -1) {
+      targetLens = _teleIndex;
     }
+
+    // Nur neu laden, wenn es wirklich eine andere Linse ist
+    if (targetLens != _currentCameraIndex) {
+      _initCamera(targetLens, displayZoom);
+    }
+  }
+
+  // Schnellsprung über die iOS Buttons (0.5, 1, 2)
+  void _jumpToZoom(double targetZoom) {
+    int idx = _availableZoomLevels.indexOf(targetZoom);
+    if (idx == -1) return;
+
+    setState(() {
+      _selectedZoomIndex = idx;
+      _currentDisplayZoom = targetZoom;
+    });
+    _zoomScrollController.jumpToItem(idx);
+    _evaluateLensSwitch(targetZoom);
   }
 
   @override
   void dispose() {
+    _lensSwitchTimer?.cancel();
     _zoomScrollController.dispose();
     _controller?.dispose();
     super.dispose();
@@ -614,6 +671,31 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     }
   }
 
+  Widget _buildQuickJumpButton(double zoomValue, String label) {
+    bool isActive = _currentDisplayZoom == zoomValue;
+    return GestureDetector(
+      onTap: () => _jumpToZoom(zoomValue),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isActive ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.3),
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.yellow : Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -628,34 +710,26 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   Positioned.fill(
                     child: GestureDetector(
                       onScaleStart: (details) {
-                        _baseZoomLevel = _currentZoomLevel;
+                        _baseZoomLevel = _currentDisplayZoom;
                       },
                       onScaleUpdate: (details) async {
                         double zoom = _baseZoomLevel * details.scale;
-                        zoom = zoom.clamp(_minAvailableZoom, _maxAvailableZoom);
+                        // Limit overall zoom from 0.5 to 15.0
+                        zoom = zoom.clamp(0.5, 15.0);
                         
-                        if (zoom != _currentZoomLevel) {
-                          setState(() {
-                            _currentZoomLevel = zoom;
-                          });
-                          await _controller!.setZoomLevel(zoom);
-
-                          int closestIndex = 0;
-                          double minDiff = double.infinity;
-                          for(int i = 0; i < _availableZoomLevels.length; i++) {
-                            double diff = (zoom - _availableZoomLevels[i]).abs();
-                            if(diff < minDiff) {
-                              minDiff = diff;
-                              closestIndex = i;
-                            }
+                        int closestIndex = 0;
+                        double minDiff = double.infinity;
+                        for(int i = 0; i < _availableZoomLevels.length; i++) {
+                          double diff = (zoom - _availableZoomLevels[i]).abs();
+                          if(diff < minDiff) {
+                            minDiff = diff;
+                            closestIndex = i;
                           }
-                          
-                          if (_selectedZoomIndex != closestIndex) {
-                            setState(() {
-                              _selectedZoomIndex = closestIndex;
-                            });
-                            _zoomScrollController.jumpToItem(closestIndex);
-                          }
+                        }
+                        
+                        if (_selectedZoomIndex != closestIndex) {
+                          _zoomScrollController.jumpToItem(closestIndex);
+                          _onWheelChanged(closestIndex);
                         }
                       },
                       child: CameraPreview(_controller!),
@@ -663,103 +737,73 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   ),
 
                   // ==========================
-                  // DIE FEINE ZOOM-LEISTE 
+                  // NEUES IOS ZOOM-RAD (EDEL & FEIN)
                   // ==========================
                   Positioned(
-                    bottom: 120, // Etwas angepasst
+                    bottom: 120, 
                     left: 0,
                     right: 0,
                     child: ShaderMask(
-                      // Dies erzeugt den Ausblend-Effekt an den Rändern (sehr Apple-like)
+                      // Dies erzeugt den eleganten Ausblend-Effekt links und rechts
                       shaderCallback: (Rect bounds) {
                         return const LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
-                          colors: <Color>[
-                            Colors.transparent,
-                            Colors.white,
-                            Colors.white,
-                            Colors.transparent
-                          ],
-                          stops: [0.0, 0.35, 0.65, 1.0], 
+                          colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
+                          stops: [0.0, 0.4, 0.6, 1.0],
                         ).createShader(bounds);
                       },
                       blendMode: BlendMode.dstIn,
                       child: SizedBox(
-                        height: 60, 
+                        height: 70, 
                         child: RotatedBox(
                           quarterTurns: -1, 
                           child: ListWheelScrollView.useDelegate(
                             controller: _zoomScrollController,
-                            itemExtent: 26, // Dichter zusammen (feiner)
+                            itemExtent: 22, // Sehr nah beieinander
                             physics: const FixedExtentScrollPhysics(), 
-                            perspective: 0.0015, // Flacheres, eleganteres Rad
-                            diameterRatio: 2.5, // Größerer virtueller Radius
-                            onSelectedItemChanged: (index) async {
-                              setState(() {
-                                _selectedZoomIndex = index;
-                              });
-                              double zoomValue = _availableZoomLevels[index];
-                              double targetZoom = zoomValue.clamp(_minAvailableZoom, _maxAvailableZoom);
-                              setState(() {
-                                _currentZoomLevel = targetZoom;
-                              });
-                              await _controller!.setZoomLevel(targetZoom);
-                            },
+                            perspective: 0.001, // Sehr flacher Winkel
+                            diameterRatio: 3.0, 
+                            onSelectedItemChanged: _onWheelChanged,
                             childDelegate: ListWheelChildBuilderDelegate(
                               childCount: _availableZoomLevels.length,
                               builder: (context, index) {
                                 double zoomValue = _availableZoomLevels[index];
                                 bool isSelected = index == _selectedZoomIndex;
-                                
                                 bool isMainLabel = zoomValue % 1 == 0 || zoomValue == 0.5;
 
                                 Widget content;
-                                
-                                if (isSelected) {
-                                  // Aktiver Wert: Kleiner, feiner roter Kreis
-                                  content = AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    width: 32,
-                                    height: 32,
-                                    alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.redAccent,
-                                    ),
-                                    child: Text(
-                                      '${zoomValue.toStringAsFixed(1).replaceAll('.', ',')}x',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // Inaktive Werte: Feine Striche und kleine Texte (echter iOS-Look)
+                                if (isMainLabel) {
+                                  // Hauptstriche (z.B. 0.5, 1, 2) mit Text darüber
                                   content = Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      if (isMainLabel)
-                                        Text(
-                                          zoomValue.toStringAsFixed(1).replaceAll('.', ','),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 11,
-                                          ),
+                                      Text(
+                                        zoomValue.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ','),
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.yellow : Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: isSelected ? 16 : 14,
                                         ),
-                                      if (isMainLabel) const SizedBox(height: 3),
+                                      ),
+                                      const SizedBox(height: 4),
                                       Container(
-                                        width: isMainLabel ? 1.5 : 1.0, // Sehr feine Linien
-                                        height: isMainLabel ? 14.0 : 8.0, 
-                                        decoration: BoxDecoration(
-                                          color: isMainLabel 
-                                              ? Colors.white 
-                                              : Colors.white.withOpacity(0.5), // Zwischenstriche leicht transparent
-                                          borderRadius: BorderRadius.circular(1),
-                                        ),
+                                        width: 1.5,
+                                        height: 18,
+                                        color: isSelected ? Colors.yellow : Colors.white,
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  // Feine Zwischenstriche (ohne Zahl)
+                                  content = Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(height: 24), // Schiebt den Strich nach unten auf eine Linie
+                                      Container(
+                                        width: 1.0,
+                                        height: 10,
+                                        color: Colors.white54,
                                       ),
                                     ],
                                   );
@@ -780,6 +824,25 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ),
 
+                  // ==========================
+                  // DIE SCHNELL-WAHL BUTTONS WIE BEI APPLE
+                  // ==========================
+                  Positioned(
+                    bottom: 200, // Direkt über dem Rad
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_ultraWideIndex != -1) _buildQuickJumpButton(0.5, "0,5"),
+                        _buildQuickJumpButton(1.0, "1"),
+                        _buildQuickJumpButton(2.0, "2"),
+                        if (_teleIndex != -1) _buildQuickJumpButton(3.0, "3"),
+                      ],
+                    ),
+                  ),
+
+                  // AUSLÖSER-BUTTON
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
@@ -802,23 +865,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ),
                   
-                  Positioned(
-                    bottom: 45,
-                    right: 30,
-                    child: GestureDetector(
-                      onTap: _toggleCameraLens,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white70, width: 2),
-                        ),
-                        child: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 28),
-                      ),
-                    ),
-                  ),
-
                   Positioned(
                     top: 10,
                     left: 10,
